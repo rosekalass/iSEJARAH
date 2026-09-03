@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v82-1`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v82-1';
+const CACHE_NAME = `${CACHE_PREFIX}v83-1`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v83-1';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',

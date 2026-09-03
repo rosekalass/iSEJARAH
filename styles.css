@@ -10989,6 +10989,109 @@ html.theme-dark #login-overlay .login-premium-body{
   --isejarah-purple:#BC1EE0;
   --isejarah-cyan:#20E2E4;
 }
+
+/* v83 — phone table ergonomics, readable analytics cards and isolated A4 preview. */
+@media screen {
+  html:not(.theme-dark) body #app main button:disabled{
+    color:#64748B!important;background:#F1F5F9!important;border-color:#CBD5E1!important;opacity:.82!important;
+  }
+  html.theme-dark body #app main button:disabled{
+    color:#AFC3DA!important;background:#172554!important;border-color:#334E72!important;opacity:.78!important;
+  }
+  /* White analytics cards must use dark ink even while the app is in dark mode. */
+  html body #app main :is(.hc-target-legend-item,.hc-attention-item){
+    color:#172033!important;background:#FFFFFF!important;border:1px solid #D8E1EE!important;
+  }
+  html body #app main .hc-target-legend-item :is(span,strong,p,i){color:#172033!important}
+  html body #app main .hc-attention-item strong{color:#150F60!important}
+  html body #app main .hc-attention-item p{color:#475569!important}
+  html body #app main .hc-attention-item button{color:#C50D65!important;background:#FFF1F7!important;border:1px solid #FBCFE8!important}
+
+  /* The report is a light A4 document, independent of application light/dark mode. */
+  html body #app main #view-reports #report-preview-shell{
+    display:block!important;max-width:100%!important;overflow-x:auto!important;overflow-y:visible!important;
+    -webkit-overflow-scrolling:touch!important;touch-action:pan-x pan-y!important;
+  }
+  html body #app main #view-reports #report-print-area.report-page-stack{
+    width:794px!important;min-width:794px!important;max-width:794px!important;margin:0 auto!important;color:#0F172A!important;color-scheme:light!important;
+  }
+  html body #app main #view-reports .report-sheet{
+    width:794px!important;min-width:794px!important;max-width:794px!important;min-height:1123px!important;
+    color:#0F172A!important;background:#FFFFFF!important;border-color:#D9E2EC!important;
+  }
+  html body #app main #view-reports .report-sheet :is(.bg-white,.bg-slate-50,.bg-slate-100){background:#FFFFFF!important}
+  html body #app main #view-reports .report-sheet :is(h1,h2,h3,h4){color:#0F172A!important}
+  html body #app main #view-reports .report-sheet :is(p,span,li,div){text-shadow:none!important}
+  html body #app main #view-reports .report-sheet :is(.text-slate-950,.text-slate-900,.text-slate-800,.text-slate-700){color:#172033!important}
+  html body #app main #view-reports .report-sheet :is(.text-slate-600,.text-slate-500,.text-slate-400){color:#526176!important}
+  html body #app main #view-reports .report-sheet table.report-data-table{color:#172033!important;background:#FFFFFF!important;table-layout:fixed!important}
+  html body #app main #view-reports .report-sheet table.report-data-table thead,
+  html body #app main #view-reports .report-sheet table.report-data-table thead tr,
+  html body #app main #view-reports .report-sheet table.report-data-table thead th{
+    color:#FFFFFF!important;background:linear-gradient(110deg,#150F60,#3348CB 58%,#BC1EE0)!important;border-color:#4E55A8!important;
+  }
+  html body #app main #view-reports .report-sheet table.report-data-table tbody,
+  html body #app main #view-reports .report-sheet table.report-data-table tbody tr,
+  html body #app main #view-reports .report-sheet table.report-data-table tbody td{
+    color:#172033!important;background:#FFFFFF!important;border-color:#D9E2EC!important;
+  }
+  html body #app main #view-reports .report-sheet table.report-data-table :is(th,td){
+    min-width:0!important;padding:6px 5px!important;font-size:9px!important;line-height:1.25!important;
+    white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;text-overflow:clip!important;
+  }
+  html body #app main #view-reports .report-sheet .report-status-chip{color:#075E54!important;background:#DDFBF4!important;border:1px solid #99F6E4!important}
+  html body #app main #view-reports .report-sheet .report-status-chip.inherited{color:#6B21A8!important;background:#F3E8FF!important;border-color:#D8B4FE!important}
+  html body #app main #view-reports .report-sheet .report-bar-track{background:#DCE5EF!important}
+  html body #app main #view-reports .report-sheet .report-bar-fill{background:linear-gradient(90deg,#FB107E,#BC1EE0,#20E2E4)!important}
+  html body #app main #view-reports .report-sheet [class~="sm:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  html body #app main #view-reports .report-sheet [class~="sm:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  html body #app main #view-reports .report-sheet [class~="sm:grid-cols-4"]{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  html body #app main #view-reports .report-sheet [class~="sm:grid-cols-6"]{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+  html body #app main #view-reports .report-sheet [class~="sm:text-right"]{text-align:right!important}
+  html body #app main #view-reports .report-sheet [class~="sm:ml-auto"]{margin-left:auto!important}
+  html body #app main #view-reports .report-sheet [class~="sm:col-span-2"]{grid-column:span 2/span 2!important}
+}
+
+@media screen and (max-width:639px){
+  /* PBD entry: use native horizontal scroll; frozen columns are disabled on phones. */
+  html body #app main #view-pbd .pbd-premium-scroll{
+    display:block!important;width:100%!important;max-width:100%!important;margin:0!important;overflow-x:auto!important;overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;touch-action:pan-x pan-y!important;overscroll-behavior-x:contain!important;
+  }
+  html body #app main #view-pbd #pbd-matrix-table{
+    width:max-content!important;min-width:1100px!important;max-width:none!important;table-layout:fixed!important;
+  }
+  html body #app main #view-pbd #pbd-matrix-table :is(.pbd-bil-head,.pbd-bil-cell,.pbd-name-head,.pbd-name-cell){
+    position:static!important;left:auto!important;right:auto!important;z-index:auto!important;transform:none!important;box-shadow:none!important;
+  }
+  html body #app main #view-pbd #pbd-matrix-table :is(.pbd-bil-head,.pbd-bil-cell){width:54px!important;min-width:54px!important;max-width:54px!important}
+  html body #app main #view-pbd #pbd-matrix-table :is(.pbd-name-head,.pbd-name-cell){
+    width:250px!important;min-width:250px!important;max-width:250px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  }
+  html body #app main #view-pbd #pbd-matrix-table :is(.pbd-sk-header,td[data-theme-key]:not(.pbd-average-cell)){
+    width:94px!important;min-width:94px!important;max-width:94px!important;
+  }
+
+  /* PBD Heat Map: preserve usable theme columns instead of squeezing them. */
+  html body #app main #view-analytics-pbd #pbd-an-heatmap-wrap{
+    display:block!important;width:100%!important;max-width:100%!important;margin:0!important;overflow-x:auto!important;overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;touch-action:pan-x pan-y!important;
+  }
+  html body #app main #view-analytics-pbd #pbd-an-heatmap-wrap table{
+    width:max-content!important;min-width:760px!important;max-width:none!important;table-layout:auto!important;
+  }
+  html body #app main #view-analytics-pbd #pbd-an-heatmap-wrap :is(th,td):first-child{
+    position:static!important;left:auto!important;z-index:auto!important;width:210px!important;min-width:210px!important;max-width:210px!important;
+  }
+  html body #app main #view-analytics-pbd #pbd-an-heatmap-wrap :is(th,td):not(:first-child){
+    width:120px!important;min-width:120px!important;max-width:150px!important;
+  }
+  html body #app main #view-analytics-pbd #pbd-an-heatmap-wrap .theme-heat-cell{
+    width:96px!important;min-width:96px!important;max-width:96px!important;
+  }
+
+  html body #app main #view-reports #report-print-area.report-page-stack{margin-left:0!important;margin-right:0!important}
+}
 @media screen {
   html:not(.theme-dark) body{
     background:radial-gradient(circle at 88% 2%,rgba(32,226,228,.14),transparent 28rem),radial-gradient(circle at 12% 10%,rgba(188,30,224,.10),transparent 26rem),#F7F9FC!important;
