@@ -1,0 +1,35 @@
+/* Scoped palette: white text only on explicitly dark surfaces. */
+html body #app main .workspace-home{border:1px solid #d7d8ee;border-radius:18px;padding:24px;background:#fff;color:#172033;box-shadow:0 12px 30px #150f600c;margin-bottom:24px}
+html body #app main .workspace-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}
+html body #app main .workspace-heading p{color:#a10e62!important;font-weight:800;font-size:11px;letter-spacing:.12em;margin:0 0 8px}
+html body #app main .workspace-heading h2{color:#150f60!important;font-size:24px;line-height:1.3;margin:0 0 8px}
+html body #app main .workspace-heading span{color:#475569!important;font-size:13px}
+html body #app main .workspace-heading button,#workspace-sidebar-search{border:1px solid #a5a1d4;background:#150f60;color:white!important;padding:12px 16px;border-radius:12px;min-height:44px;font-weight:700}
+html body #app main .workspace-heading button small{display:block;color:#ddd9ff;margin-top:4px}
+#workspace-sidebar-search{width:100%;margin-bottom:12px;text-align:left}
+html body #app main .workspace-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+html body #app main .workspace-actions button{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid #dce1ef;background:#f7f8fd;color:#150f60!important;border-radius:14px;padding:18px;min-width:0;min-height:98px;cursor:pointer}
+html body #app main .workspace-actions button[hidden]{display:none!important}
+html body #app main .workspace-actions button:hover{background:#fce7f3;border-color:#c91b78}
+html body #app main .workspace-actions svg{width:24px;height:24px;flex-shrink:0;color:#97106c!important}
+html body #app main .workspace-actions strong{display:block;color:#150f60!important;font-size:14px}
+html body #app main .workspace-actions small{display:block;color:#475569!important;font-size:12px;line-height:1.5;margin-top:5px}
+html body #app main .workspace-home details{margin-top:20px;border-top:1px solid #dce1ef;padding-top:16px;color:#334155!important;font-size:13px;line-height:1.7}
+html body #app main .workspace-home summary{cursor:pointer;font-weight:700;color:#150f60!important;min-height:32px}
+html body #app main .workspace-home ol{list-style:decimal;padding-left:20px;margin:10px 0}
+html body #app main .workspace-home details p{color:#475569!important}
+html body #app main .workspace-connection{font-size:11px;color:#475569!important;margin:16px 0 0}
+html body #app main .workspace-connection.is-offline{color:#9f1239!important}
+#workspace-search{width:min(560px,calc(100% - 24px));max-height:85dvh;margin:auto;border:1px solid #b9b5df;border-radius:18px;background:#fff;color:#172033;padding:22px;box-shadow:0 24px 80px #08052966;color-scheme:light}
+#workspace-search::backdrop{background:#080529b3;backdrop-filter:blur(4px)}
+.workspace-dialog-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+#workspace-search h2{font-size:19px;font-weight:800;color:#150f60}
+#workspace-search label{display:block;font-size:12px;margin-bottom:6px}
+#workspace-search input{width:100%;min-height:48px;background:white!important;color:#172033!important;border:1px solid #8986bb!important;padding:12px;border-radius:10px;font-size:16px}
+#workspace-search button{min-height:44px;border-radius:8px;padding:10px 12px;color:#150f60;background:#f0effa;border:1px solid #dedcf0;text-align:left}
+#workspace-results{display:grid;gap:7px;margin-top:14px;max-height:50dvh;overflow:auto}
+#workspace-search button:hover{background:#fce7f3}
+.workspace-home button:focus-visible,#workspace-search :focus-visible,#workspace-sidebar-search:focus-visible{outline:3px solid #a10e62;outline-offset:3px}
+@media(max-width:1000px){html body #app main .workspace-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){html body #app main .workspace-home{padding:16px}html body #app main .workspace-heading{align-items:stretch;flex-direction:column;gap:14px}html body #app main .workspace-heading h2{font-size:21px}html body #app main .workspace-actions{grid-template-columns:minmax(0,1fr)}html body #app main .workspace-actions button{min-height:78px;padding:14px}}
+@media print{.workspace-home,#workspace-search,#workspace-sidebar-search{display:none!important}}
