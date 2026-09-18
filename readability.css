@@ -1,0 +1,72 @@
+/* v86.2: explicit surface/ink pairs. Loaded last to resolve legacy theme overrides. */
+@media screen {
+ html body #app #app-topbar #session-role-display {background:transparent!important;color:#e3eaf7!important;border:0!important;box-shadow:none!important}
+ html body #app #app-topbar #session-role-display :is(#current-role-badge,svg) {background:transparent!important;color:inherit!important;border:0!important;box-shadow:none!important;text-decoration:none!important}
+ html body #app #topbar-user-profile>div:first-child {background:#101e34!important;color:#fff!important;transition:none!important}
+ html body #app #topbar-user-profile #user-avatar-initial {color:#fff!important}
+ html body [id^="modal-"] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea) {background:#fff!important;color:#273652!important;border-color:#9cacbd!important;color-scheme:light;box-sizing:border-box;max-width:100%;min-width:0}
+ html.theme-dark body [id^="modal-"] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea) {background:#101e34!important;color:#edf3ff!important;border-color:#647b99!important;color-scheme:dark}
+ html body [id^="modal-"] :is(input,textarea)::placeholder {color:#53647c!important;opacity:1!important}
+ html.theme-dark body [id^="modal-"] :is(input,textarea)::placeholder {color:#b9c9df!important;opacity:1!important}
+ html body [id^="modal-"] :is(input,select,textarea):disabled {opacity:1!important}
+ @media(max-width:639px){html body [id^="modal-"] :is(input,select,textarea){font-size:16px!important;min-height:44px}}
+ html body #app main #view-analytics-pbd .theme-heat-cell.bg-violet-100 {background:#eee6ff!important;color:#51218d!important}
+ html body #app main #view-analytics-pbd .theme-heat-cell.bg-emerald-100 {background:#def7ec!important;color:#155c46!important}
+ html body #app main #view-analytics-pbd .theme-heat-cell.bg-blue-100 {background:#e0edff!important;color:#244b8f!important}
+ html body #app main #view-analytics-pbd .theme-heat-cell.bg-orange-100 {background:#ffedd5!important;color:#82421a!important}
+ html body #app main #view-analytics-pbd .theme-heat-cell.bg-rose-100 {background:#ffe4ed!important;color:#8f2047!important}
+ html body #app main #view-analytics-pbd .theme-heat-cell.bg-slate-50 {background:#eef2f6!important;color:#4b5a70!important}
+ html body #app main #view-analytics-pbd .theme-heat-cell :is(span,small){color:inherit!important;opacity:1!important}
+ html:not(.theme-dark) body [id^="modal-"] .text-rose-500 {color:#b51d49!important}
+ html.theme-dark body [id^="modal-"] .text-rose-500 {color:#ffabc5!important}
+ html.theme-dark body #modal-overall-tp .text-blue-900 {color:#d6e5ff!important}
+ html body #app main #view-pbd .pbd-premium-toolbar #btn-pbd-delete-data:disabled {color:#475569!important;background:#e9edf3!important;opacity:1!important}
+ html body #app main #view-pbd .pbd-tp-pill-empty {color:#526078!important;background:#fff!important}
+ html body #app main #view-marks .data-action-btn.edit {background:#e7edff!important;color:#213e83!important}
+ html body #app main #view-marks .data-action-btn.edit :is(span,svg){color:inherit!important}
+ html body #app main :is(#btn-marks-delete-data,#btn-pbd-delete-data):disabled {color:#475569!important;background:#e9edf3!important;opacity:1!important}
+ html body #app main #pbd-filter-empty-state {background:#fff!important;color:#334155!important}
+ html body #app main #pbd-filter-empty-state :is(h4,p){color:#334155!important}
+ html body #app main :is(#view-analytics-class,#view-intervention,#view-users)>div:first-child span.text-slate-400 {color:#c7d2e8!important}
+ html body #app main #view-analytics-student>div:first-child .text-emerald-700 {color:#92e5dc!important}
+ html body #app main #view-import-export .bg-navy-950 {background:#150f60!important;color:#f7f9fc!important}
+ html body #app main #view-import-export .bg-navy-950 :is(h3,p){color:#f7f9fc!important}
+ html body #app main #view-import-export button[onclick="downloadPhase9BackupJson()"] {background:#eef2ff!important;color:#25205d!important;border-color:#abb7df!important}
+ html:not(.theme-dark) body #app main :is(.upgrade-table small,.upgrade-empty) {color:#526078!important}
+ html.theme-dark body #app main .hc-context-eyebrow {color:#8de7dc!important}
+ html.theme-dark body #app main .hc-kpi-label {color:#b9c8df!important}
+ html body #app main .hc-segment {background:#eef2f8!important;color:#273652!important}
+ html body #app main .hc-segment.active {background:#234dac!important;color:#fff!important}
+ html.theme-dark body #app main #view-intervention :is(.text-blue-900,.text-blue-800) {color:#d5e6ff!important}
+ /* These pale cards retain dark ink in both app modes. */
+ html body #app main .hc-grade-card {background:#fff!important;color:#273652!important}
+ html body #app main .hc-grade-card :is(strong,p){color:#273652!important}
+ html body #app main .hc-target-legend-item :is(strong,span,p){color:#273652!important}
+ html body #app main :is(input,select,textarea)::placeholder {color:#596980!important;opacity:1!important}
+ html.theme-dark body #app main :is(input,select,textarea)::placeholder {color:#bccbe0!important;opacity:1!important}
+ /* Keep native date controls and flexible form children inside their cells. */
+ html body #app main input[type=date] {box-sizing:border-box;min-width:0!important;max-width:100%!important;width:100%}
+ html body #app main :is(.grid,.flex)>:is(div,fieldset){min-width:0}
+ html body #app main :is(button,a,input,select,textarea,summary):focus-visible {outline:3px solid #b65391!important;outline-offset:3px}
+}
+/* Printed/exported documents use a consistent paper palette in either app mode. */
+html body #app main #view-reports #report-print-area,
+html body #app main #view-reports #report-print-area :is(div,p,span,li,b,strong,h1,h2,h3,h4,small) {color:#263449!important;text-shadow:none!important}
+html body #app main #view-reports #report-print-area :is(.bg-white,.bg-slate-50,.bg-slate-100) {background:#fff!important}
+html body #app main #view-reports #report-print-area :is(.bg-amber-50,.bg-amber-100) {background:#fff6df!important;color:#654319!important}
+html body #app main #view-reports #report-print-area :is(.bg-blue-50,.bg-blue-100) {background:#edf4ff!important;color:#263449!important}
+html body #app main #view-reports #report-print-area :is(.bg-emerald-50,.bg-emerald-100) {background:#eafaf2!important;color:#175541!important}
+html body #app main #view-reports #report-print-area :is(th,th *) {background:#243e79!important;color:#fff!important}
+html body #app main #view-reports #report-print-area :is(.text-emerald-700,.text-emerald-800) {color:#176347!important}
+html body #app main #view-reports #report-print-area :is(.text-rose-700,.text-rose-800) {color:#a01a43!important}
+html body #app main #view-reports #report-print-area :is(.text-blue-700,.text-blue-800) {color:#23478f!important}
+/* A stable font metric and equal padding avoid html2canvas's low baseline in badges. */
+html body #app main #view-reports #report-print-area table.report-data-table {font-family:Arial,sans-serif!important}
+html body #app main #view-reports #report-print-area table.report-data-table :is(th,td) {vertical-align:middle!important;text-align:center!important;line-height:1.4!important;padding:8px 6px!important;height:auto!important}
+html body #app main #view-reports #report-print-area .report-status-chip {display:inline-block!important;vertical-align:middle!important;line-height:1.4!important;padding:4px 8px!important;min-height:0!important;height:auto!important;font-family:Arial,sans-serif!important}
+html body #app main #view-reports #report-print-area table:has(.report-status-chip) col:nth-child(1){width:7%!important}
+html body #app main #view-reports #report-print-area table:has(.report-status-chip) col:nth-child(2){width:35%!important}
+html body #app main #view-reports #report-print-area table:has(.report-status-chip) col:nth-child(3){width:14%!important}
+html body #app main #view-reports #report-print-area table:has(.report-status-chip) col:nth-child(4){width:10%!important}
+html body #app main #view-reports #report-print-area table:has(.report-status-chip) col:nth-child(5){width:12%!important}
+html body #app main #view-reports #report-print-area table:has(.report-status-chip) col:nth-child(6){width:22%!important}
