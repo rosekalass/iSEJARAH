@@ -2,6 +2,62 @@
     // Initialize Lucide Icons
     lucide.createIcons();
 
+    // The v88.3 toolbar included this control but did not define its handler.
+    function togglePbdDensity() {
+        const scroll = document.getElementById('pbd-matrix-scroll');
+        const button = document.getElementById('pbd-density-toggle');
+        if (!scroll || !button) return;
+        const isDense = scroll.classList.toggle('pbd-table-dense');
+        updatePbdDensityButton(isDense);
+        try { localStorage.setItem('isejarah-pbd-density', isDense ? 'dense' : 'comfortable'); } catch (_) {}
+    }
+
+    function updatePbdDensityButton(isDense) {
+        const button = document.getElementById('pbd-density-toggle');
+        if (!button) return;
+        button.classList.toggle('active', isDense);
+        button.setAttribute('aria-pressed', String(isDense));
+        button.title = isDense ? 'Tukar kepada paparan selesa' : 'Tukar kepada paparan padat';
+        button.innerHTML = `<i data-lucide="rows-3" class="w-3.5 h-3.5"></i> ${isDense ? 'Padat' : 'Selesa'}`;
+        lucide.createIcons();
+    }
+
+    function restorePbdDensity() {
+        const scroll = document.getElementById('pbd-matrix-scroll');
+        if (!scroll) return;
+        let isDense = true;
+        try { isDense = localStorage.getItem('isejarah-pbd-density') !== 'comfortable'; } catch (_) {}
+        scroll.classList.toggle('pbd-table-dense', isDense);
+        updatePbdDensityButton(isDense);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', restorePbdDensity, { once:true });
+    else restorePbdDensity();
+
+    // Presentation-only pastel fills; data, axes and event handlers are unchanged.
+    if (typeof Chart !== 'undefined' && typeof Chart.register === 'function') {
+        const pastelDatasets = new WeakSet();
+        const softenChartColor = color => {
+            if (typeof color !== 'string') return color;
+            let rgb;
+            if (/^#[0-9a-f]{6}$/i.test(color)) rgb = [1,3,5].map(i => parseInt(color.slice(i,i+2),16));
+            else if (/^rgba?\(/i.test(color)) rgb = color.match(/[\d.]+/g)?.slice(0,3).map(Number);
+            if (!rgb || rgb.length !== 3) return color;
+            return 'rgb(' + rgb.map(v => Math.round(v*.38+255*.62)).join(',') + ')';
+        };
+        Chart.register({
+            id: 'isejarahPastel',
+            beforeUpdate(chart) {
+                chart.data.datasets.forEach(dataset => {
+                    if (pastelDatasets.has(dataset)) return;
+                    if (Array.isArray(dataset.backgroundColor)) dataset.backgroundColor = dataset.backgroundColor.map(softenChartColor);
+                    else if (dataset.backgroundColor) dataset.backgroundColor = softenChartColor(dataset.backgroundColor);
+                    pastelDatasets.add(dataset);
+                });
+            }
+        });
+    }
+
     // Chart.js Variables
     let chartGradesInstance = null;
     let chartTpInstance = null;
@@ -4423,8 +4479,8 @@
         localStorage.setItem(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
 
         if (typeof Chart !== 'undefined') {
-            Chart.defaults.color = isDark ? '#cce9fa' : '#355570';
-            Chart.defaults.borderColor = isDark ? '#285174' : '#c8e1f3';
+            Chart.defaults.color = '#51435f';
+            Chart.defaults.borderColor = '#cbbddb';
         }
 
         try {
@@ -6101,7 +6157,7 @@
     }
 
     function getPbdThemeHeaderColor(index) {
-        const colors = ['#065F46','#0F766E','#115E59','#164E63','#14532D'];
+        const colors = ['#CFEBDD','#DDD2F5','#F6D6E4','#D3E8F8','#F8E4C8'];
         return colors[index % colors.length];
     }
 
@@ -9469,9 +9525,9 @@
 
     function reportHeaderHtml(title, subtitle='') {
         const logo = phase9SchoolProfile.logoDataUrl
-          ? `<img src="${phase9SchoolProfile.logoDataUrl}" alt="Logo sekolah" class="w-16 h-16 object-contain">`
-          : `<div class="w-16 h-16 rounded-2xl bg-navy-950 text-white flex items-center justify-center font-black text-2xl">S</div>`;
-        return `<div class="flex items-start gap-4 pb-5 border-b-2 border-slate-900"><div>${logo}</div><div class="flex-1"><p class="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-700">Panitia Sejarah</p><h1 class="text-xl font-black text-slate-950 mt-1">${reportSafe(phase9SchoolProfile.schoolName)}</h1><p class="text-[10px] text-slate-500 mt-1 whitespace-pre-line">${reportSafe(phase9SchoolProfile.address)}${phase9SchoolProfile.schoolCode ? ' · Kod: '+reportSafe(phase9SchoolProfile.schoolCode) : ''}</p><h2 class="text-lg font-extrabold text-slate-900 mt-4">${reportSafe(title)}</h2>${subtitle?`<p class="text-xs text-slate-500 mt-1">${reportSafe(subtitle)}</p>`:''}</div><div class="text-right text-[10px] text-slate-500"><p class="font-bold text-slate-700">Sesi ${reportSafe(phase9SchoolProfile.sessionLabel)}</p><p class="mt-1">Dijana: ${new Date().toLocaleDateString('ms-MY')}</p></div></div>`;
+          ? `<img src="${phase9SchoolProfile.logoDataUrl}" alt="Logo sekolah" class="report-document-logo">`
+          : `<div class="report-document-logo report-document-logo-fallback">S</div>`;
+        return `<header class="report-document-header"><div class="report-document-logo-wrap">${logo}</div><div class="report-document-brand"><p class="report-document-kicker">Panitia Sejarah</p><h1>${reportSafe(phase9SchoolProfile.schoolName)}</h1><p class="report-document-address">${reportSafe(phase9SchoolProfile.address)}${phase9SchoolProfile.schoolCode ? ' · Kod: '+reportSafe(phase9SchoolProfile.schoolCode) : ''}</p><h2>${reportSafe(title)}</h2>${subtitle?`<p class="report-document-subtitle">${reportSafe(subtitle)}</p>`:''}</div><div class="report-document-meta"><p><b>Sesi ${reportSafe(phase9SchoolProfile.sessionLabel)}</b></p><p>Dijana: ${new Date().toLocaleDateString('ms-MY')}</p></div></header>`;
     }
 
     function reportFooterHtml() {
@@ -9676,46 +9732,75 @@
         });
     }
 
+    function reportLoadedStyles() {
+        return [...document.styleSheets].map(sheet=>{
+            try { return '<style>'+[...sheet.cssRules].map(rule=>rule.cssText).join('\n')+'</style>'; }
+            catch { return ''; }
+        }).join('');
+    }
+
+    function reportSelfContainedHtml(node) {
+        const clone=node.cloneNode(true);
+        const originals=[...node.querySelectorAll('img')];
+        clone.querySelectorAll('img').forEach((img,index)=>{
+            const source=originals[index];
+            if(!source?.complete||!source.naturalWidth)return;
+            try {
+                const canvas=document.createElement('canvas');
+                canvas.width=source.naturalWidth;canvas.height=source.naturalHeight;
+                canvas.getContext('2d').drawImage(source,0,0);
+                img.src=canvas.toDataURL('image/png');
+                img.removeAttribute('srcset');img.loading='eager';
+            } catch { img.src=source.currentSrc||source.src; }
+        });
+        return clone.outerHTML;
+    }
+
     async function captureReportPreviewSheets() {
         const area=document.getElementById('report-print-area');
         if(!area||typeof html2canvas==='undefined')throw new Error('Enjin paparan laporan tidak tersedia.');
         let sheets=[...area.querySelectorAll(':scope > .report-sheet')];
         if(!sheets.length){arrangeReportPreviewPages(area);sheets=[...area.querySelectorAll(':scope > .report-sheet')];}
         if(document.fonts?.ready)await document.fonts.ready;
-        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
         const canvases=[];
         for(const sheet of sheets){
-            const canvas=await html2canvas(sheet,{
-                scale:2,
-                useCORS:true,
-                allowTaint:false,
-                backgroundColor:'#ffffff',
-                logging:false,
-                scrollX:0,
-                scrollY:0,
-                width:sheet.offsetWidth,
-                height:sheet.scrollHeight,
-                onclone: async (doc, clonedSheet) => {
-                    const stable=doc.createElement('style');
-                    stable.textContent='*{animation:none!important;transition:none!important;scroll-behavior:auto!important}';doc.head.appendChild(stable);
-                    // Render only this sheet, outside the app's scrolling viewport.
-                    // Preserve selector ancestry so preview and export share styles.
-                    const app=doc.createElement('div');app.id='app';
-                    const main=doc.createElement('main');
-                    const view=doc.createElement('section');view.id='view-reports';
-                    const paper=doc.createElement('div');paper.id='report-print-area';
-                    app.appendChild(main);main.appendChild(view);view.appendChild(paper);
-                    paper.appendChild(clonedSheet);doc.body.replaceChildren(app);
-                    for(const el of [doc.documentElement,doc.body,app,main,view,paper]){
-                        for(const [name,value] of Object.entries({margin:'0',padding:'0',position:'static',transform:'none',overflow:'visible',width:'794px','min-width':'794px','max-width':'794px',height:'auto','max-height':'none',display:'block'}))el.style.setProperty(name,value,'important');
-                        el.scrollTop=0;el.scrollLeft=0;
-                    }
-                    clonedSheet.style.setProperty('margin','0','important');
-                    doc.defaultView.scrollTo(0,0);
-                    await new Promise(resolve=>doc.defaultView.requestAnimationFrame(()=>doc.defaultView.requestAnimationFrame(resolve)));
-                }
-            });
-            canvases.push(canvas);
+            const captureRoot=document.createElement('div');
+            captureRoot.setAttribute('aria-hidden','true');
+            captureRoot.style.cssText='position:fixed!important;left:0!important;top:0!important;width:794px!important;height:1123px!important;margin:0!important;padding:0!important;overflow:hidden!important;pointer-events:none!important;background:#fff!important;z-index:-2147483647!important';
+            // Recreate the selector context used by the report stylesheet, but keep
+            // it at body level so transformed/responsive app containers cannot shift it.
+            captureRoot.innerHTML='<div id="app"><main><section id="view-reports"><div id="report-print-area">'+reportSelfContainedHtml(sheet)+'</div></section></main></div>';
+            document.body.appendChild(captureRoot);
+            try {
+                captureRoot.querySelectorAll('#app,main,#view-reports,#report-print-area').forEach(el=>{
+                    ['margin','padding'].forEach(prop=>el.style.setProperty(prop,'0','important'));
+                    el.style.setProperty('display','block','important');
+                    el.style.setProperty('position','static','important');
+                    el.style.setProperty('transform','none','important');
+                    el.style.setProperty('width','794px','important');
+                    el.style.setProperty('max-width','794px','important');
+                    el.style.setProperty('overflow','visible','important');
+                    el.style.setProperty('background','#fff','important');
+                });
+                await Promise.all([...captureRoot.querySelectorAll('img')].map(img=>img.decode().catch(()=>{})));
+                const target=captureRoot.querySelector('.report-sheet');
+                target.style.setProperty('width','794px','important');
+                target.style.setProperty('min-width','794px','important');
+                target.style.setProperty('max-width','794px','important');
+                target.style.setProperty('height','1123px','important');
+                target.style.setProperty('min-height','1123px','important');
+                target.style.setProperty('max-height','1123px','important');
+                target.style.setProperty('margin','0','important');
+                target.style.setProperty('padding','45px 38px 53px','important');
+                target.style.setProperty('overflow','hidden','important');
+                await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+                // Do not silently discard data when unusually long notes exceed A4.
+                const bounds=target.getBoundingClientRect();
+                const contentBottom=Math.max(...[...target.children].filter(el=>!el.classList.contains('report-sheet-number')).map(el=>el.getBoundingClientRect().bottom));
+                if(contentBottom>bounds.top+1070)throw new Error('Kandungan melebihi halaman A4. Gunakan Cetak untuk pemisahan halaman automatik.');
+                const canvas=await html2canvas(target,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#fff',logging:false,scrollX:0,scrollY:0,windowWidth:794,windowHeight:1123,width:794,height:1123});
+                canvases.push(canvas);
+            } finally { captureRoot.remove(); }
         }
         return canvases;
     }
@@ -9728,12 +9813,10 @@
             const canvases=await captureReportPreviewSheets();
             const {jsPDF}=window.jspdf; const pdf=new jsPDF('p','mm','a4');
             for(let index=0;index<canvases.length;index++){
-                const canvas=canvases[index],imgData=canvas.toDataURL('image/png');
-                const pageW=210,pageH=297,scale=Math.min(pageW/canvas.width,pageH/canvas.height),renderW=canvas.width*scale,renderH=canvas.height*scale,x=(pageW-renderW)/2,y=(pageH-renderH)/2;
+                const canvas=canvases[index],imgData=canvas.toDataURL('image/jpeg',0.96);
                 if(index>0)pdf.addPage('a4','portrait');
-                // The seventh argument is the image cache alias, not compression.
-                // Reusing 'FAST' there makes jsPDF repeat the first page image.
-                pdf.addImage(imgData,'PNG',x,y,renderW,renderH,`report-page-${index+1}`,'FAST');
+                // Each A4 page uses its own image; 2x capture keeps table text sharp.
+                pdf.addImage(imgData,'JPEG',0,0,210,297,'report-page-'+index,'NONE');
             }
             pdf.save(`${currentReportPayload.title.replace(/[^a-z0-9]+/gi,'_')}_${todayIsoLocal()}.pdf`);
         } catch(err){ console.error(err); showAlert('PDF Gagal Dijana','Cuba gunakan fungsi Cetak → Save as PDF.','danger'); }
@@ -9742,7 +9825,6 @@
     async function printCurrentReport() {
         if(!currentReportPayload)generateReportPreview();
         if(!currentReportPayload)return;
-        if(typeof html2canvas==='undefined'){showAlert('Enjin Cetakan Tidak Tersedia','Sila muat semula halaman dan cuba lagi.','danger');return;}
         const win=window.open('','_blank','width=900,height=950');
         if(!win){showAlert('Pop-up Disekat','Benarkan pop-up untuk membuka paparan cetakan A4.','danger');return;}
         win.document.write('<!doctype html><html><head><title>Menyediakan cetakan…</title></head><body style="font-family:Arial;padding:24px;color:#475569">Menyediakan halaman A4 berdasarkan pratonton…</body></html>');
@@ -9755,8 +9837,41 @@
             win.document.write(`<!doctype html><html lang="ms"><head><meta charset="utf-8"><title>${title}</title><style>
               @page{size:A4 portrait;margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff}.print-page{width:210mm;height:297mm;margin:0;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden;break-after:page;page-break-after:always}.print-page:last-child{break-after:auto;page-break-after:auto}.print-page img{display:block;width:210mm;height:297mm;object-fit:contain;object-position:center;background:#fff}@media screen{body{background:#dbe3ee;padding:20px}.print-page{margin:0 auto 20px;box-shadow:0 8px 30px rgba(15,23,42,.18)}}@media print{body{background:#fff!important}.print-page{box-shadow:none!important;margin:0!important}}
             </style></head><body>${pages}</body></html>`);
-            win.document.close();win.focus();setTimeout(()=>win.print(),500);
-        }catch(err){console.error(err);win.close();showAlert('Cetakan Gagal Dijana','Paparan pratonton tidak dapat dirakam. Cuba muat semula halaman.','danger');}
+            win.document.close();
+            await Promise.all([...win.document.images].map(img=>img.decode().catch(()=>{})));
+            win.focus();win.print();
+        }catch(err){
+            console.warn('Rakaman tidak tersedia; menggunakan cetakan dokumen A4.',err);
+            try { await printReportDocumentFallback(win); }
+            catch(fallbackError){console.error(fallbackError);showAlert('Cetakan Belum Sedia','Pastikan logo dan fail gaya selesai dimuatkan, kemudian cuba lagi.','danger');}
+        }
+    }
+
+    async function printReportDocumentFallback(win) {
+        // Browser print can render the same DOM without the canvas/CDN dependency.
+        const area=document.getElementById('report-print-area');
+        if(!area||!area.querySelector('.report-sheet'))throw new Error('Tiada halaman laporan.');
+        const styles=[...document.styleSheets].map(sheet=>{
+            try { return '<style>'+[...sheet.cssRules].map(rule=>rule.cssText).join('\n')+'</style>'; }
+            catch { return ''; } // External web fonts are unnecessary for the Arial document.
+        }).join('');
+        win.document.open();
+        win.document.write('<!doctype html><html lang="ms"><head><meta charset="utf-8"><base href="'+reportSafe(document.baseURI)+'"><title>'+reportSafe(currentReportPayload.title)+'</title>'+styles+
+            '</head><body><div id="app"><main><section id="view-reports">'+reportSelfContainedHtml(area)+'</section></main></div></body></html>');
+        win.document.close();
+        await Promise.all([...win.document.querySelectorAll('link[rel="stylesheet"]')].map(link=>new Promise((resolve,reject)=>{
+            if(link.sheet)return resolve();
+            const timer=setTimeout(()=>reject(new Error('Gaya cetakan belum tersedia.')),15000);
+            link.onload=()=>{clearTimeout(timer);resolve();};
+            link.onerror=()=>{clearTimeout(timer);reject(new Error('Gaya cetakan gagal dimuatkan.'));};
+        })));
+        // The report uses Arial; do not wait for unrelated application web fonts.
+        await Promise.race([
+            Promise.all([...win.document.images].map(img=>img.decode().catch(()=>{}))),
+            new Promise(resolve=>setTimeout(resolve,5000))
+        ]);
+        win.document.documentElement.dataset.reportReady='true';
+        win.focus();setTimeout(()=>win.print(),0);
     }
 
     function reportRowsForWorkbook(payload) {
@@ -10698,8 +10813,8 @@
         // Common font config
         Chart.defaults.font.family = "'Inter', sans-serif";
         const darkChartMode = document.documentElement.classList.contains('theme-dark');
-        Chart.defaults.color = darkChartMode ? '#cbd5e1' : '#64748b';
-        Chart.defaults.borderColor = darkChartMode ? '#334155' : '#e2e8f0';
+        Chart.defaults.color = '#51435f';
+        Chart.defaults.borderColor = '#cbbddb';
 
         // 1. Mark Distribution (Bar Chart)
         chartGradesInstance = new Chart(ctxGrades, {

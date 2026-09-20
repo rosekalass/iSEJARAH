@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v86-4`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v86-4';
+const CACHE_NAME = `${CACHE_PREFIX}v88-7`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-7';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -13,14 +13,31 @@ const STATIC_CDN_HOSTS = new Set([
   'fonts.gstatic.com'
 ]);
 const STATIC_ASSETS = [
+  './assets/pastel-trophy.svg',
+  './assets/pastel-flower.svg',
+  './assets/pastel-school.svg',
+  './assets/pastel-search.svg',
+  './assets/pastel-gear.svg',
+  './assets/pastel-home.svg',
+  './assets/pastel-students.svg',
+  './assets/pastel-chart.svg',
+  './assets/pastel-pencil.svg',
+  './assets/pastel-books.svg',
+  './assets/pastel-check.svg',
+  './assets/pastel-target.svg',
+  './assets/pastel-heart.svg',
+  './assets/pastel-printer.svg',
+  './pastel.css?v=88.4',
+  './report-a4.css?v=88.5',
+  './assets/pastel-clay-atlas.png',
   './readability.css?v=86.3',
   './',
   './index.html',
-  './styles.css',
+  './styles.css?v=83',
   './polish.css?v=86.1',
   './workspace.css?v=86.1',
   './modules/workspace.js?v=86.1',
-  './app.js?v=86.3',
+  './app.js?v=88.5',
   './responsive.js',
   './pwa.js',
   './config.js',
@@ -41,7 +58,9 @@ const STATIC_ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(STATIC_ASSETS))
+      .then(cache => Promise.all(STATIC_ASSETS.map(asset =>
+        cache.add(asset).catch(error => console.warn('Optional asset was not cached:', asset, error))
+      )))
       .then(() => self.skipWaiting())
   );
 });
@@ -102,8 +121,9 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Compare URL paths, not paths containing ?v=. Keep the exact query in cache keys.
   const isStaticAsset = STATIC_ASSETS.some(asset =>
-    url.pathname.endsWith(asset.replace('./', '/'))
+    url.pathname === new URL(asset, self.registration.scope).pathname
   );
   if (isStaticAsset) event.respondWith(staleWhileRevalidate(request));
 });

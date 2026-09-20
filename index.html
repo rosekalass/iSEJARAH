@@ -23,6 +23,42 @@
   
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    /* Keep controls usable when the icon CDN is temporarily unavailable. */
+    if (!window.lucide) {
+      window.lucide = {
+        createIcons: function () {
+          const symbols = {
+            menu:'☰', x:'×', search:'⌕', 'search-x':'⌕', download:'↓', upload:'↑',
+            moon:'☾', sun:'☀', 'log-out':'↪', 'arrow-right':'→', 'arrow-up-right':'↗',
+            'chevron-left':'‹', 'chevron-right':'›', plus:'＋', pencil:'✎', 'pencil-line':'✎',
+            save:'▣', 'trash-2':'⌫', printer:'▤', 'file-text':'▧', 'file-spreadsheet':'▦',
+            users:'♟', 'users-round':'♟', school:'⌂', target:'◎', settings:'⚙',
+            'chart-column':'▥', 'bar-chart-3':'▥', 'layout-dashboard':'▦',
+            'book-open-check':'✓', 'check-circle-2':'✓', 'shield-check':'✓',
+            'alert-triangle':'!', 'alert-circle':'!', 'refresh-cw':'↻', 'rotate-ccw':'↻',
+            'rows-3':'≡', filter:'▽', calendar:'□', 'calendar-days':'□',
+            'cloud-check':'✓', cloud:'☁', database:'◉', award:'★', 'file-check-2':'✓'
+          };
+          document.querySelectorAll('i[data-lucide]').forEach(function (el) {
+            if (el.dataset.iconFallback === '1') return;
+            el.dataset.iconFallback = '1';
+            el.classList.add('lucide-fallback');
+            el.setAttribute('aria-hidden', 'true');
+            el.textContent = symbols[el.dataset.lucide] || '•';
+            if (el.closest('#app-topbar')) el.style.setProperty('color', '#403150', 'important');
+          });
+        }
+      };
+    }
+  </script>
+  <style>
+    .lucide-fallback{display:inline-grid;place-items:center;font-style:normal;font-weight:800;line-height:1}
+    #app-topbar button .lucide-fallback{color:#403150!important;font-size:1.1rem}
+    /* These two areas already use local 3D artwork through ::before. */
+    .nav-item>.lucide-fallback,
+    .workspace-actions button>.lucide-fallback:first-child{display:none!important}
+  </style>
   
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -41,6 +77,8 @@
   <link rel="stylesheet" href="workspace.css?v=86.1">
   <link rel="stylesheet" href="polish.css?v=86.1">
   <link rel="stylesheet" href="readability.css?v=86.3">
+  <link rel="stylesheet" href="pastel.css?v=88.4">
+  <link rel="stylesheet" href="report-a4.css?v=88.5">
 
   
 
@@ -3278,7 +3316,7 @@
       </div>
   </div>
 
-  <script src="app.js?v=86.3"></script>
+  <script src="app.js?v=88.5"></script>
   <script src="modules/upgrades.js"></script>
   <script src="modules/workspace.js?v=86.1"></script>
   <script src="responsive.js"></script>

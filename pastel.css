@@ -1,0 +1,291 @@
+/* iSEJARAH Pastel Studio — presentation only. Export sheets deliberately excluded. */
+
+/* Restore six distinct assessment tones; pastel theme must not erase meaning. */
+@media screen {
+html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-1{background:#f8dce5!important;color:#763b50!important;border-color:#763b50!important}
+html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-2{background:#f8e6ce!important;color:#684827!important;border-color:#684827!important}
+html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-3{background:#dceafb!important;color:#304e72!important;border-color:#304e72!important}
+html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-4{background:#d6eee2!important;color:#275643!important;border-color:#275643!important}
+html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-5{background:#e5daf7!important;color:#533776!important;border-color:#533776!important}
+html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-6{background:#f4dcef!important;color:#733d6b!important;border-color:#733d6b!important}
+}
+
+
+/* v88.2: executive report cover has an explicit paired surface and ink. */
+html body #app#app#app main #view-executive-report #executive-print .report-cover{
+ background:#eee0f5!important;background-image:linear-gradient(115deg,#ecddfa,#fbe2eb 55%,#fff0d6)!important;
+ color:#403150!important;border:1px solid #decbe8!important;box-shadow:none!important;
+}
+html body #app#app#app main #view-executive-report #executive-print .report-cover :is(h1,h2,h3,p,span){
+ color:#403150!important;text-shadow:none!important;opacity:1!important
+}
+@media screen {
+html body #app#app#app#app .nav-item::before,
+html body #app#app#app#app main .workspace-actions button::before,
+html body #app#app#app#app main > section:not(#view-reports)>div:first-child :is(h1,h2)::before{
+ background-image:url("assets/pastel-clay-atlas.png")!important;
+ background-size:400% 400%!important;
+ background-position:var(--clay-x,0%) var(--clay-y,0%)!important;
+ background-repeat:no-repeat!important;
+ clip-path:inset(5% 2% 5% 5%);
+}
+html body #app#app#app#app .nav-item::before{width:36px!important;height:36px!important}
+html body #app#app#app#app main .workspace-actions button::before{width:64px!important;height:64px!important}
+html body #app#app#app#app main .workspace-actions button{grid-template-columns:64px minmax(0,1fr) 16px!important}
+html body #app#app#app#app main .hc-kpi-icon{background-image:url("assets/pastel-clay-atlas.png")!important;background-size:400% 400%!important;background-position:33.3333% 66.6667%!important;clip-path:inset(5% 2% 5% 5%)}
+html body #app#app#app#app main .hc-kpi:nth-child(2n) .hc-kpi-icon{background-position:66.6667% 0%!important}
+html body #app#app#app#app main .hc-kpi:nth-child(3n) .hc-kpi-icon{background-position:66.6667% 33.3333%!important}
+}
+#app#app#app #nav-dashboard,#app#app#app #view-dashboard{--clay-x:0%;--clay-y:0%}
+#app#app#app #nav-students,#app#app#app #view-students{--clay-x:33.333333333333336%;--clay-y:0%}
+#app#app#app #nav-classes,#app#app#app #view-classes{--clay-x:100%;--clay-y:66.66666666666667%}
+#app#app#app #nav-marks,#app#app#app #view-marks{--clay-x:100%;--clay-y:0%}
+#app#app#app #nav-pbd,#app#app#app #view-pbd{--clay-x:0%;--clay-y:33.333333333333336%}
+#app#app#app #nav-analytics-marks,#app#app#app #view-analytics-marks{--clay-x:66.66666666666667%;--clay-y:0%}
+#app#app#app #nav-headcount,#app#app#app #view-headcount{--clay-x:66.66666666666667%;--clay-y:33.333333333333336%}
+#app#app#app #nav-analytics-pbd,#app#app#app #view-analytics-pbd{--clay-x:66.66666666666667%;--clay-y:0%}
+#app#app#app #nav-analytics-student,#app#app#app #view-analytics-student{--clay-x:33.333333333333336%;--clay-y:100%}
+#app#app#app #nav-analytics-class,#app#app#app #view-analytics-class{--clay-x:66.66666666666667%;--clay-y:0%}
+#app#app#app #nav-intervention,#app#app#app #view-intervention{--clay-x:100%;--clay-y:33.333333333333336%}
+#app#app#app #nav-reports,#app#app#app #view-reports{--clay-x:0%;--clay-y:66.66666666666667%}
+#app#app#app #nav-import-export,#app#app#app #view-import-export{--clay-x:0%;--clay-y:33.333333333333336%}
+#app#app#app #nav-users,#app#app#app #view-users{--clay-x:33.333333333333336%;--clay-y:0%}
+#app#app#app #nav-settings,#app#app#app #view-settings{--clay-x:0%;--clay-y:100%}
+#app#app#app #nav-completeness,#app#app#app #view-completeness{--clay-x:33.333333333333336%;--clay-y:33.333333333333336%}
+#app#app#app #nav-attention,#app#app#app #view-attention{--clay-x:100%;--clay-y:100%}
+#app#app#app #nav-teacher-dashboard,#app#app#app #view-teacher-dashboard{--clay-x:66.66666666666667%;--clay-y:66.66666666666667%}
+#app#app#app #nav-admin-tools,#app#app#app #view-admin-tools{--clay-x:0%;--clay-y:100%}
+#app#app#app #nav-executive-report,#app#app#app #view-executive-report{--clay-x:33.333333333333336%;--clay-y:66.66666666666667%}
+#app#app#app main .workspace-actions button:nth-child(1){--clay-x:33.333333333333336%;--clay-y:0%}
+#app#app#app main .workspace-actions button:nth-child(2){--clay-x:66.66666666666667%;--clay-y:0%}
+#app#app#app main .workspace-actions button:nth-child(3){--clay-x:100%;--clay-y:0%}
+#app#app#app main .workspace-actions button:nth-child(4){--clay-x:0%;--clay-y:33.333333333333336%}
+#app#app#app main .workspace-actions button:nth-child(5){--clay-x:33.333333333333336%;--clay-y:33.333333333333336%}
+#app#app#app main .workspace-actions button:nth-child(6){--clay-x:66.66666666666667%;--clay-y:33.333333333333336%}
+#app#app#app main .workspace-actions button:nth-child(7){--clay-x:100%;--clay-y:33.333333333333336%}
+#app#app#app main .workspace-actions button:nth-child(8){--clay-x:0%;--clay-y:66.66666666666667%}
+
+@media screen {
+html body #app#app#app main > section:not(#view-reports) :is(h1,h2,h3,h4,p,span,small,strong,label,button,a,b){color:var(--ps-ink)!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="badge"],[class*="chip"],.dashboard-gpmp-value,.hc-filters,.hc-filter-panel,.hc-filter-bar,.headcount-method-card,.entry-status-badge){background:var(--ps-lilac)!important;color:var(--ps-ink)!important;background-image:none!important}
+html body #app#app#app main #view-pbd table thead th,html body #app#app#app main #view-pbd table thead th>div{background:var(--ps-mint)!important;background-image:none!important}
+html body #app#app#app main #kpi-avg-note,html body #app#app#app main .upgrade-empty{color:var(--ps-muted)!important}
+html body #app#app#app main #view-reports button{color:var(--ps-ink)!important;background:var(--ps-lilac)!important}
+html body #app#app#app main #view-reports>div:first-child span{background:var(--ps-lilac)!important;color:var(--ps-ink)!important}
+html body [id^="modal-"] :is(.bg-white,.bg-navy-900,.bg-slate-900){background:#fffafc!important}
+}
+
+@media screen {
+html body #app#app#app .nav-item::before,html body #app#app#app main .workspace-actions button::before{content:"";background:var(--module-art,url("assets/pastel-books.svg")) center/contain no-repeat!important;box-shadow:none!important;border-radius:0!important;width:34px;height:34px}
+html body #app#app#app main .workspace-actions button::before{width:48px;height:48px}
+html body #app#app#app main .workspace-actions button:nth-child(1){--module-art:url("assets/pastel-students.svg")}
+html body #app#app#app main .workspace-actions button:nth-child(2){--module-art:url("assets/pastel-chart.svg")}
+html body #app#app#app main .workspace-actions button:nth-child(3){--module-art:url("assets/pastel-pencil.svg")}
+html body #app#app#app main .workspace-actions button:nth-child(4){--module-art:url("assets/pastel-books.svg")}
+html body #app#app#app main .workspace-actions button:nth-child(5){--module-art:url("assets/pastel-check.svg")}
+html body #app#app#app main .workspace-actions button:nth-child(6){--module-art:url("assets/pastel-target.svg")}
+html body #app#app#app main .workspace-actions button:nth-child(7){--module-art:url("assets/pastel-heart.svg")}
+html body #app#app#app main .workspace-actions button:nth-child(8){--module-art:url("assets/pastel-printer.svg")}
+#app#app #nav-dashboard{--module-art:url("assets/pastel-home.svg")}
+#app#app #nav-students{--module-art:url("assets/pastel-students.svg")}
+#app#app #nav-classes{--module-art:url("assets/pastel-home.svg")}
+#app#app #nav-marks{--module-art:url("assets/pastel-pencil.svg")}
+#app#app #nav-pbd{--module-art:url("assets/pastel-books.svg")}
+#app#app #nav-analytics-marks{--module-art:url("assets/pastel-chart.svg")}
+#app#app #nav-headcount{--module-art:url("assets/pastel-target.svg")}
+#app#app #nav-analytics-pbd{--module-art:url("assets/pastel-chart.svg")}
+#app#app #nav-analytics-student{--module-art:url("assets/pastel-students.svg")}
+#app#app #nav-analytics-class{--module-art:url("assets/pastel-chart.svg")}
+#app#app #nav-intervention{--module-art:url("assets/pastel-heart.svg")}
+#app#app #nav-reports{--module-art:url("assets/pastel-printer.svg")}
+#app#app #nav-import-export{--module-art:url("assets/pastel-books.svg")}
+#app#app #nav-users{--module-art:url("assets/pastel-students.svg")}
+#app#app #nav-settings{--module-art:url("assets/pastel-check.svg")}
+#app#app #nav-completeness{--module-art:url("assets/pastel-check.svg")}
+#app#app #nav-attention{--module-art:url("assets/pastel-heart.svg")}
+#app#app #nav-teacher-dashboard{--module-art:url("assets/pastel-home.svg")}
+#app#app #nav-admin-tools{--module-art:url("assets/pastel-check.svg")}
+#app#app #nav-executive-report{--module-art:url("assets/pastel-chart.svg")}
+}
+
+@media screen {
+html body #app#app #sidebar #sidebar-school-name,html body #app#app #sidebar #sidebar-school-name+p{color:var(--ps-ink)!important}
+html body #app#app main #view-teacher-dashboard .upgrade-heading span{color:var(--ps-ink)!important}
+html body #app#app main #view-headcount .hc-subject-chip{background:var(--ps-pink)!important;color:var(--ps-ink)!important}
+html body #app#app main #view-headcount .hc-empty span{color:var(--ps-muted)!important}
+html body #app#app main #view-settings .text-amber-900{background:var(--ps-lilac)!important;color:var(--ps-ink)!important}
+html body #app#app main #view-settings .text-amber-900 p{color:var(--ps-ink)!important}
+html body #app#app main .upgrade-panel .pbd-progress-summary b{color:#343047!important}
+html body #login-overlay{background:#eee5f7!important;background-image:none!important}
+html body #login-overlay .login-premium-card{border:1px solid #d8cbe6!important;border-radius:28px!important;box-shadow:0 16px 50px #57426b1a!important}
+html body #login-overlay .login-primary-button{background:#684387!important;color:#fff!important;border-radius:14px!important;box-shadow:none!important}
+html body #app#app main #analytics-insights{background:var(--ps-paper)!important}
+html body #app#app main #analytics-insights span{color:var(--ps-ink)!important}
+html body #app#app main .marks-toolbar-note{background:var(--ps-paper)!important;color:var(--ps-muted)!important}
+html body #app#app main .marks-toolbar-note span{color:var(--ps-muted)!important}
+html body #app#app main #view-pbd .pbd-premium-table-card [class*="text-[#C8A951]"]{color:var(--ps-accent)!important}
+html body #app#app #sidebar .nav-item{transition:none!important}
+html body #app#app main > section[id^="view-"]>div:first-child :is(span:not([class*="badge"]),.text-emerald-700),html body #app#app main .upgrade-heading span,html body #app#app main .hc-page-header span{color:var(--ps-ink)!important}
+html body #app#app main :is(.pbd-mini-kpi,.upgrade-panel,.hc-card){background:var(--ps-paper)!important;color:var(--ps-ink)!important}
+html body #app#app main :is(.pbd-mini-kpi-label,.safety-note,.hc-card>span,.upgrade-panel li,.upgrade-panel label,.upgrade-panel b){color:var(--ps-muted)!important}
+html body #app#app main .hc-subject-chip{background:var(--ps-pink)!important;color:var(--ps-ink)!important}
+html body #app#app main #analytics-insight-panel span{color:var(--ps-ink)!important}
+html body #app#app main #view-settings .text-amber-900 p{color:inherit!important}
+html body #app#app #sidebar#sidebar .nav-item.tab-active{background:var(--ps-pink)!important;color:var(--ps-ink)!important}
+html body #app#app #sidebar#sidebar [id^="nav-group"]>p{color:var(--ps-muted)!important}
+html body #app#app main .workspace-home .workspace-heading button{background:var(--ps-lilac)!important;color:var(--ps-ink)!important}
+html body #app#app main .workspace-home .workspace-heading button small{color:var(--ps-muted)!important}
+html body #app#app #app-topbar #topbar-user-profile #user-avatar-initial{color:#fff!important}
+html body #app#app {--ps-bg:#f6f3fa;--ps-paper:#fffdfa;--ps-ink:#343047;--ps-muted:#625c73;--ps-line:#ded7e9;--ps-lilac:#eee5fc;--ps-pink:#fbe2eb;--ps-mint:#e0f2e9;--ps-accent:#684387;--polish-ink:var(--ps-ink);--polish-muted:var(--ps-muted);--polish-surface:var(--ps-paper);--polish-line:var(--ps-line);background:var(--ps-bg)!important;color:var(--ps-ink)!important}
+html.theme-dark body #app#app {--ps-bg:#201f2b;--ps-paper:#2c293a;--ps-ink:#f3edf9;--ps-muted:#ccc2d9;--ps-line:#51475f;--ps-lilac:#3c334e;--ps-pink:#503346;--ps-mint:#293f3c;--ps-accent:#e0c3f5}
+html body #app#app main {background:var(--ps-bg)!important;background-image:none!important}
+html body #app#app #sidebar {background:var(--ps-paper)!important;background-image:none!important;border-right:1px solid var(--ps-line)!important}
+html body #app#app #sidebar :is(header,footer){background:var(--ps-lilac)!important;color:var(--ps-ink)!important}
+html body #app#app #sidebar :is(header,footer) * {color:var(--ps-ink)!important}
+html body #app#app #sidebar [id^="nav-group"] {background:transparent!important;border:0!important;box-shadow:none!important}
+html body #app#app #sidebar [id^="nav-group"]>p {color:var(--ps-muted)!important;letter-spacing:.08em!important}
+html body #app#app #sidebar .nav-item:not(.tab-active),html body #app#app #sidebar .nav-item:not(.tab-active) :is(span,svg,i){color:var(--ps-ink)!important}
+html body #app#app #sidebar .nav-item{border-radius:14px!important;min-height:46px!important}
+html body #app#app #sidebar .nav-item:not(.tab-active):hover{background:var(--ps-lilac)!important}
+html body #app#app #sidebar .nav-item.tab-active,html body #app#app #sidebar #nav-group-assessment .nav-item.tab-active{background:var(--ps-pink)!important;color:var(--ps-ink)!important;border:1px solid var(--ps-line)!important;box-shadow:inset 3px 0 #b4517f!important}
+html body #app#app #sidebar .nav-item.tab-active :is(span,svg,i){color:var(--ps-ink)!important}
+html body #app#app #app-topbar{background:var(--ps-lilac)!important;color:var(--ps-ink)!important;border-bottom:1px solid var(--ps-line)!important;box-shadow:0 3px 14px #30204008!important}
+html body #app#app #app-topbar :is(h1,h2,button,span,#session-role-display,#current-role-badge,svg){color:var(--ps-ink)!important;text-shadow:none!important}
+html body #app#app #app-topbar button{background:var(--ps-paper)!important;border-color:var(--ps-line)!important;border-radius:13px!important}
+html body #app#app #app-topbar #session-role-display{background:transparent!important}
+html body #app#app main .workspace-home{background:var(--ps-paper)!important;border:1px solid var(--ps-line)!important;border-radius:24px!important;padding:clamp(20px,3vw,36px)!important}
+html body #app#app main .workspace-heading p{color:var(--ps-accent)!important}
+html body #app#app main .workspace-heading h2{font-size:clamp(24px,2.6vw,36px)!important;max-width:650px;line-height:1.25!important}
+html body #app#app main .workspace-actions{gap:14px!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr))!important}
+html body #app#app main .workspace-actions button{background:var(--ps-lilac)!important;border:1px solid var(--ps-line)!important;border-radius:18px!important;grid-template-columns:44px minmax(0,1fr) 16px!important;padding:20px 14px!important;min-height:120px!important}
+html body #app#app main .workspace-actions button:nth-child(3n+2){background:var(--ps-mint)!important}
+html body #app#app main .workspace-actions button:nth-child(3n){background:var(--ps-pink)!important}
+html body #app#app main .workspace-actions button:hover{box-shadow:0 5px 14px #30204014!important;border-color:var(--ps-accent)!important;transform:translateY(-2px)}
+html body #app#app main .workspace-actions button :is(strong,small,span){color:var(--ps-ink)!important}
+html body #app#app main .workspace-heading button,html body #app#app #workspace-sidebar-search{background:var(--ps-lilac)!important;color:var(--ps-ink)!important;border-color:var(--ps-line)!important;border-radius:14px!important}
+html body #app#app main .workspace-heading button small{color:var(--ps-muted)!important}
+html body #app#app main > section[id^="view-"]>div:first-child:not(.workspace-home),
+html body #app#app main :is(.upgrade-heading,#view-headcount .hc-page-header){background:var(--ps-lilac)!important;border:1px solid var(--ps-line)!important;border-radius:20px!important;box-shadow:none!important}
+html body #app#app main > section[id^="view-"]>div:first-child :is(h1,h2,h3,p),
+html body #app#app main :is(.upgrade-heading,#view-headcount .hc-page-header) :is(h1,h2,h3,p){color:var(--ps-ink)!important}
+html body #app#app main > section:not(#view-reports) :is(.hc-card,.hc-kpi,.upgrade-panel,.upgrade-kpi,.dashboard-kpi-card,.class-status,.pbd-premium-summary,.pbd-premium-toolbar,.pbd-premium-table-card){background:var(--ps-paper)!important;color:var(--ps-ink)!important;border:1px solid var(--ps-line)!important;border-radius:18px!important;box-shadow:0 3px 12px #30204005!important}
+html body #app#app main > section:not(#view-reports) :is(.hc-kpi,.dashboard-kpi-card,.pbd-premium-summary) :is(h3,strong,p){color:var(--ps-ink)!important}
+html body #app#app main > section:not(#view-reports) table thead th{background:var(--ps-lilac)!important;background-image:none!important;color:var(--ps-ink)!important;border-color:var(--ps-line)!important;text-shadow:none!important}
+html body #app#app main #view-pbd table thead tr:first-child th{background:var(--ps-mint)!important;color:var(--ps-ink)!important}
+html body #app#app main :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid var(--ps-accent)!important;outline-offset:3px}
+html body #app#app .nav-item::before,html body #app#app main .workspace-actions button::before{content:var(--module-emoji,"📚");display:inline-grid;place-items:center;flex-shrink:0;width:32px;height:32px;font:24px/1 "Segoe UI Emoji","Apple Color Emoji",sans-serif;border-radius:11px;background:linear-gradient(145deg,#ffffffcf,#eadcf2);box-shadow:inset 0 2px 1px #fff,0 3px 0 #b8a2c64d,0 5px 9px #38234712;text-shadow:0 2px 2px #50324c22}
+html body #app#app main .workspace-actions button::before{width:44px;height:44px;font-size:30px;border-radius:15px}
+html body #app#app .nav-item>svg,html body #app#app main .workspace-actions button>svg:first-child{display:none!important}
+html body #app#app main .workspace-actions button:nth-child(1){--module-emoji:"🧑‍🎓"}html body #app#app main .workspace-actions button:nth-child(2){--module-emoji:"📊"}html body #app#app main .workspace-actions button:nth-child(3){--module-emoji:"✏️"}html body #app#app main .workspace-actions button:nth-child(4){--module-emoji:"📚"}html body #app#app main .workspace-actions button:nth-child(5){--module-emoji:"✅"}html body #app#app main .workspace-actions button:nth-child(6){--module-emoji:"🎯"}html body #app#app main .workspace-actions button:nth-child(7){--module-emoji:"💝"}html body #app#app main .workspace-actions button:nth-child(8){--module-emoji:"🖨️"}
+@media(max-width:639px){html body #app#app main .workspace-actions{grid-template-columns:1fr!important}html body #app#app main .workspace-actions button{min-height:96px!important}html body #app#app main .workspace-heading{align-items:stretch!important}html body #app#app main .workspace-home{padding:18px!important}}
+@media(prefers-reduced-motion:reduce){html body #app#app main .workspace-actions button{transition:none!important;transform:none!important}}
+}
+#app#app #nav-dashboard{--module-emoji:"🏡"}
+#app#app #nav-students{--module-emoji:"🧑‍🎓"}
+#app#app #nav-classes{--module-emoji:"🏫"}
+#app#app #nav-marks{--module-emoji:"✏️"}
+#app#app #nav-pbd{--module-emoji:"📚"}
+#app#app #nav-analytics-marks{--module-emoji:"📊"}
+#app#app #nav-headcount{--module-emoji:"🎯"}
+#app#app #nav-analytics-pbd{--module-emoji:"🧩"}
+#app#app #nav-analytics-student{--module-emoji:"🔎"}
+#app#app #nav-analytics-class{--module-emoji:"📈"}
+#app#app #nav-intervention{--module-emoji:"💝"}
+#app#app #nav-reports{--module-emoji:"🖨️"}
+#app#app #nav-import-export{--module-emoji:"📦"}
+#app#app #nav-users{--module-emoji:"👥"}
+#app#app #nav-settings{--module-emoji:"⚙️"}
+#app#app #nav-completeness{--module-emoji:"✅"}
+#app#app #nav-attention{--module-emoji:"🌷"}
+#app#app #nav-teacher-dashboard{--module-emoji:"🍎"}
+#app#app #nav-admin-tools{--module-emoji:"🛠️"}
+#app#app #nav-executive-report{--module-emoji:"📋"}
+
+/* v88.1: pastel surfaces in BOTH modes. Night mode reduces ambient brightness,
+   not text contrast. Dark ink is intentional, not a pastel text color. */
+@media screen {
+html.theme-dark body #app#app {--ps-bg:#77718e;--ps-paper:#e4dded;--ps-ink:#342b45;--ps-muted:#574964;--ps-line:#c5b8d5;--ps-lilac:#d5c8ec;--ps-pink:#edc9da;--ps-mint:#c7e1d6;--ps-accent:#674282}
+html body #app#app#app #sidebar {background:var(--ps-paper)!important}
+html body #app#app#app #sidebar>div,html body #app#app#app #sidebar nav{background:var(--ps-paper)!important;background-image:none!important}
+html body #app#app#app #sidebar>div *{color:var(--ps-ink)!important}
+html body #app#app#app #topbar-user-profile>div:first-child{background:var(--ps-pink)!important}
+html body #app#app#app #app-topbar #topbar-user-profile #user-avatar-initial{color:var(--ps-ink)!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="bg-navy-"],[class*="bg-slate-"],[class*="bg-white"],[class*="bg-gradient-"]){background:var(--ps-paper)!important;background-image:none!important;color:var(--ps-ink)!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="bg-blue-"],[class*="bg-indigo-"],[class*="bg-violet-"],[class*="bg-purple-"]){background:#e2def7!important;color:#40345d!important;background-image:none!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="bg-emerald-"],[class*="bg-green-"],[class*="bg-teal-"],[class*="bg-cyan-"]){background:#d4eee1!important;color:#285545!important;background-image:none!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="bg-rose-"],[class*="bg-red-"],[class*="bg-pink-"]){background:#f5d8e3!important;color:#71364d!important;background-image:none!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="bg-amber-"],[class*="bg-orange-"],[class*="bg-yellow-"]){background:#f5e1ca!important;color:#684629!important;background-image:none!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="bg-"]) :is(h1,h2,h3,h4,p,span,small,strong,label){color:inherit!important}
+html body #app#app#app main > section:not(#view-reports) :is([class*="text-slate-"],[class*="text-gray-"],[class*="text-white"],[class*="text-navy-"]){color:var(--ps-ink)!important}
+html body #app#app#app main > section:not(#view-reports) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea){background:var(--ps-paper)!important;color:var(--ps-ink)!important;border-color:var(--ps-line)!important;color-scheme:light}
+html body #app#app#app main > section:not(#view-reports) :is(input,textarea)::placeholder{color:var(--ps-muted)!important;opacity:1!important}
+html body #app#app#app main > section:not(#view-reports) :is(.marks-type-btn,.data-action-btn,.pbd-table-action,.hc-segment,.primary-action,.secondary-action){background:var(--ps-lilac)!important;color:var(--ps-ink)!important;border-color:var(--ps-line)!important;box-shadow:none!important}
+html body #app#app#app main > section:not(#view-reports) :is(.data-action-btn,.pbd-table-action,.primary-action,.secondary-action) :is(span,svg){color:inherit!important}
+html body #app#app#app main > section:not(#view-reports) :is(.data-save,.save){background:var(--ps-mint)!important}
+html body #app#app#app main > section:not(#view-reports) :is(.data-delete,.delete,.pdf){background:var(--ps-pink)!important}
+html body #app#app#app main > section:not(#view-reports) :is(.hc-page-header,.pbd-compact-topbar,.marks-data-toolbar,.pbd-mini-kpi,.hc-kpi,.hc-card,.hc-empty,.hc-segment,.upgrade-panel){background:var(--ps-paper)!important;color:var(--ps-ink)!important}
+html body #app#app#app main > section:not(#view-reports) :is(.hc-card,.hc-kpi,.pbd-mini-kpi,.hc-empty) :is(span,p,strong,h3){color:var(--ps-ink)!important}
+html body #app#app#app main > section:not(#view-reports) table :is(th,td){background:var(--ps-paper)!important;color:var(--ps-ink)!important;border-color:var(--ps-line)!important}
+html body #app#app#app main > section:not(#view-reports) table tbody tr:nth-child(even) td{background:var(--ps-lilac)!important}
+html body #app#app#app main > section:not(#view-reports) table thead th{background:var(--ps-mint)!important}
+html body #app#app#app main > section:not(#view-reports) table :is(th,td) :is(span,small,strong){color:inherit!important}
+html body #app#app#app main #view-pbd :is(.pbd-tp-pill,.pbd-tp-pill-empty){background:var(--ps-lilac)!important;color:var(--ps-ink)!important}
+html body #app#app#app main #analytics-gpmp-panel{background:var(--ps-mint)!important;color:var(--ps-ink)!important}
+html body #app#app#app main #analytics-gpmp-panel :is(p,span,strong,svg,#an-kpi-gpmp){color:var(--ps-ink)!important}
+html body #app#app#app main .workspace-actions button:nth-child(4n){background:#f4dfc8!important}
+html body #app#app#app main .workspace-actions button:nth-child(4n) :is(strong,small,span){color:#493a34!important}
+html body #app#app#app main :is(button,a,input,select,textarea,summary):focus-visible{outline-color:#674282!important}
+html body [id^="modal-"] :is(.bg-white,.bg-navy-900,.bg-slate-900){background:#f0e9f8!important;color:#342b45!important}
+html body [id^="modal-"] :is(input:not([type=checkbox]):not([type=radio]),select,textarea){background:#fffafc!important;color:#342b45!important;color-scheme:light}
+html body [id^="modal-"] :is(input,textarea)::placeholder{color:#63536d!important}
+html body #login-overlay .login-primary-button{background:#decaf1!important;color:#48335e!important;border:1px solid #bea5d3!important}
+}
+
+/* Bright pastel ombre: color is decorative, never the only state indicator. */
+@media screen {
+html body #app#app#app{--ps-hero:linear-gradient(115deg,#f6dded 0%,#e9ddfb 48%,#d9eff3 100%)}
+html.theme-dark body #app#app#app{--ps-bg:#b1a6c7;--ps-paper:#efe6f7;--ps-lilac:#e0d2f7;--ps-pink:#f5cddd;--ps-mint:#ccebdd;--ps-hero:linear-gradient(115deg,#eec8dc,#dcd0f3 50%,#c9e4ec)}
+html body #app#app#app main .workspace-home{background:linear-gradient(145deg,var(--ps-paper) 65%,var(--ps-lilac))!important}
+html body #app#app#app #app-topbar{background:var(--ps-hero)!important}
+html body #app#app#app #app-topbar #topbar-user-profile{background:var(--ps-paper)!important;border-color:var(--ps-line)!important}
+html body #app#app#app main .workspace-actions button{background:linear-gradient(130deg,#eee0ff,#ddd9ff)!important;border-color:#d6c8e9!important;box-shadow:inset 0 1px 0 #ffffffc0,0 4px 10px #73568e08!important}
+html body #app#app#app main .workspace-actions button:nth-child(4n+2){background:linear-gradient(130deg,#daf5e3,#cfeaf2)!important}
+html body #app#app#app main .workspace-actions button:nth-child(4n+3){background:linear-gradient(130deg,#ffe1eb,#f6d3e9)!important}
+html body #app#app#app main .workspace-actions button:nth-child(4n){background:linear-gradient(130deg,#ffedcf,#f8dccc)!important}
+html body #app#app#app main .workspace-actions button::before{width:54px;height:54px}
+html body #app#app#app main .workspace-actions button{grid-template-columns:54px minmax(0,1fr) 16px!important}
+html body #app#app#app main > section:not(#view-reports)>div:first-child:not(.workspace-home){background:var(--ps-hero)!important}
+html body #app#app#app main > section:not(#view-reports)>div:first-child :is(h1,h2)::before{content:"";display:inline-block!important;position:static!important;width:44px!important;height:44px!important;margin:0 12px 0 0!important;vertical-align:middle;background:var(--module-art,url("assets/pastel-flower.svg")) center/contain no-repeat!important;box-shadow:none!important;border:0!important}
+html body #app#app#app main .workspace-heading h2::before{display:none!important}
+html body #app#app#app main #view-headcount :is(.hc-filter-card,.hc-context-card,.hc-tabs-shell,.hc-tab-btn,.hc-assessment-bar){background:var(--ps-paper)!important;color:var(--ps-ink)!important}
+html body #app#app#app main #view-headcount .hc-tab-btn.active{background:var(--ps-pink)!important;box-shadow:inset 0 -3px #ab6588!important}
+html body #app#app#app main #view-settings .headcount-method-option input:checked+.headcount-method-card{background:var(--ps-mint)!important;border:2px solid #608878!important}
+html body #app#app#app main .marks-type-btn.active{background:var(--ps-mint)!important;border:2px solid #608878!important}
+html body #app#app#app main .hc-kpi-icon{background:url("assets/pastel-trophy.svg") center/contain no-repeat!important;width:40px!important;height:40px!important}
+html body #app#app#app main .hc-kpi-icon svg{visibility:hidden}
+html body #app#app#app main .hc-kpi:nth-child(2n) .hc-kpi-icon{background-image:url("assets/pastel-chart.svg")!important}
+html body #app#app#app main .hc-kpi:nth-child(3n) .hc-kpi-icon{background-image:url("assets/pastel-target.svg")!important}
+html body [id^="modal-"] :is(.bg-white,.bg-navy-900,.bg-slate-900){background:#fffafc!important}
+html body #login-overlay{background:linear-gradient(130deg,#f7dceb,#e5dafa 50%,#d3edf0)!important}
+}
+#app#app #nav-classes,#app#app #view-classes{--module-art:url("assets/pastel-school.svg")}
+#app#app #nav-settings,#app#app #view-settings{--module-art:url("assets/pastel-gear.svg")}
+#app#app #nav-attention,#app#app #view-attention{--module-art:url("assets/pastel-flower.svg")}
+#app#app #nav-analytics-student,#app#app #view-analytics-student{--module-art:url("assets/pastel-search.svg")}
+#app#app #nav-executive-report,#app#app #view-executive-report{--module-art:url("assets/pastel-trophy.svg")}
+#app#app #view-students{--module-art:url("assets/pastel-students.svg")}
+#app#app #view-marks{--module-art:url("assets/pastel-pencil.svg")}
+#app#app #view-pbd{--module-art:url("assets/pastel-books.svg")}
+#app#app #view-analytics-marks{--module-art:url("assets/pastel-chart.svg")}
+#app#app #view-headcount{--module-art:url("assets/pastel-target.svg")}
+#app#app #view-analytics-pbd{--module-art:url("assets/pastel-chart.svg")}
+#app#app #view-intervention{--module-art:url("assets/pastel-heart.svg")}
+#app#app #view-import-export{--module-art:url("assets/pastel-books.svg")}
+#app#app #view-users{--module-art:url("assets/pastel-students.svg")}
+#app#app #view-completeness{--module-art:url("assets/pastel-check.svg")}
+#app#app #view-teacher-dashboard{--module-art:url("assets/pastel-home.svg")}
+#app#app #view-admin-tools{--module-art:url("assets/pastel-gear.svg")}
+
+
+
+
