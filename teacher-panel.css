@@ -25,11 +25,24 @@
  html body #login-overlay#login-overlay .brand-reference-image{width:100%;height:auto;display:block;object-fit:contain}
  html body #login-overlay#login-overlay .brand-motto{padding:12px 20px;max-width:100%;font-size:12px}
  html body #login-overlay#login-overlay .login-premium-card{max-width:1180px!important;grid-template-columns:minmax(0,1.45fr) minmax(320px,1fr)!important}
- html body #app#app#app#app#app .sidebar-brand-wordmark{max-height:140px!important;width:100%!important;object-fit:contain!important}
+ html body #app#app#app#app#app .sidebar-brand-header{min-height:86px!important;padding:11px 12px!important;gap:8px!important;background:#fff!important;border-color:#dfe9f6!important}
+ html body #app#app#app#app#app .sidebar-brand-lockup{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;flex:1 1 auto!important}
+ html body #app#app#app#app#app .sidebar-brand-icon{display:block!important;width:60px!important;height:60px!important;flex:0 0 60px!important;object-fit:contain!important;border-radius:15px!important}
+ html body #app#app#app#app#app .sidebar-brand-copy{display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0!important;line-height:1!important}
+ html body #app#app#app#app#app .sidebar-brand-name{display:block!important;color:#3767cf!important;font-size:24px!important;font-weight:900!important;letter-spacing:-1.1px!important;white-space:nowrap!important;text-shadow:none!important;filter:none!important}
+ html body #app#app#app#app#app .sidebar-brand-motto{display:block!important;margin-top:5px!important;color:#27518a!important;font-size:7.5px!important;font-weight:600!important;line-height:1.35!important;letter-spacing:0!important;white-space:nowrap!important;text-shadow:none!important;filter:none!important}
+ html body #app#app#app#app#app .sidebar-close-button{flex:0 0 auto!important;color:#55729a!important}
+ html body #app#app#app#app#app .sidebar-footer{text-align:left!important;background:#fff!important;border-color:#dfe9f6!important;padding:13px 18px 15px!important}
+ html body #app#app#app#app#app #sidebar-school-name{margin:0!important;color:#173c7a!important;font-size:11px!important;font-weight:700!important;line-height:1.45!important;letter-spacing:0!important;text-transform:none!important;text-shadow:none!important;filter:none!important;white-space:normal!important;overflow-wrap:anywhere!important}
+ html body #app#app#app#app#app .sidebar-copyright{margin:5px 0 0!important;color:#476282!important;font-size:10px!important;font-weight:500!important;line-height:1.4!important;letter-spacing:0!important;text-transform:none!important;text-shadow:none!important;filter:none!important}
  @media(max-width:639px){
   html body #app#app#app#app#app #pbd-matrix-table :is(.pbd-bil-head,.pbd-bil-cell,.pbd-name-head,.pbd-name-cell),html body #app#app#app#app#app .hc-student-table :is(th,td):nth-child(-n+2){position:static!important;left:auto!important;box-shadow:none!important}
   html body #login-overlay#login-overlay .login-premium-card{display:flex!important;flex-direction:column!important}
   html body #login-overlay#login-overlay .brand-reference-image{max-height:300px}
   html body #login-overlay#login-overlay .brand-motto{font-size:11px;padding:8px 14px}
+  html body #app#app#app#app#app .sidebar-brand-header{min-height:82px!important;padding:10px 11px!important}
+  html body #app#app#app#app#app .sidebar-brand-icon{width:56px!important;height:56px!important;flex-basis:56px!important}
+  html body #app#app#app#app#app .sidebar-brand-name{font-size:22px!important}
+  html body #app#app#app#app#app .sidebar-brand-motto{font-size:7px!important}
  }
 }

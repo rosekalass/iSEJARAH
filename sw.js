@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v88-7-teacher`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-7-teacher';
+const CACHE_NAME = `${CACHE_PREFIX}v88-8-sidebar`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-8-sidebar';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -13,7 +13,7 @@ const STATIC_CDN_HOSTS = new Set([
   'fonts.gstatic.com'
 ]);
 const STATIC_ASSETS = [
-  './teacher-panel.css?v=88.7',
+  './teacher-panel.css?v=88.8',
   './assets/brand-branding-approved-login-artwork.png',
   "./branding.css?v=88.6",
   "./assets/brand-branding-logo-horizontal-compact.png",

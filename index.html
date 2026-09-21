@@ -203,7 +203,7 @@
 <meta name="msapplication-config" content="browserconfig.xml">
 <meta name="description" content="Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
 <link rel="stylesheet" href="branding.css?v=88.6">
-<link rel="stylesheet" href="teacher-panel.css?v=88.7">
+<link rel="stylesheet" href="teacher-panel.css?v=88.8">
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -216,11 +216,15 @@
     <!-- Responsive Sidebar Navigation -->
     <aside id="sidebar" class="fixed top-0 bottom-0 left-0 z-50 w-72 bg-navy-950 text-slate-300 flex flex-col border-r border-navy-800 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
       <!-- Sidebar Header -->
-      <div class="sidebar-brand-header px-4 flex items-center justify-between border-b border-navy-800 bg-navy-900/50">
-        <div class="sidebar-brand-wordmark-wrap">
-          <img src="assets/brand-branding-approved-login-artwork.png" alt="iSEJARAH — Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu" class="sidebar-brand-wordmark">
+      <div class="sidebar-brand-header flex items-center justify-between border-b border-navy-800 bg-navy-900/50">
+        <div class="sidebar-brand-lockup" aria-label="iSEJARAH — Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
+          <img src="assets/brand-branding-app-icon-master-1024.png" alt="" class="sidebar-brand-icon">
+          <div class="sidebar-brand-copy">
+            <span class="sidebar-brand-name">iSEJARAH</span>
+            <span class="sidebar-brand-motto">Data Diperkasa. • Pentaksiran Dipermudah.<br>Kecemerlangan Dipacu</span>
+          </div>
         </div>
-        <button onclick="toggleSidebar()" class="p-1.5 text-slate-400 hover:text-white rounded-lg lg:hidden hover:bg-navy-800">
+        <button onclick="toggleSidebar()" class="sidebar-close-button p-1.5 text-slate-400 hover:text-white rounded-lg lg:hidden hover:bg-navy-800" aria-label="Tutup menu">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -327,9 +331,9 @@
       </nav>
 
       <!-- Sidebar Footer -->
-      <div class="p-4 border-t border-navy-800/80 bg-navy-900/30 text-center">
-        <p id="sidebar-school-name" class="text-[11px] text-slate-400 font-medium">SK Demo Bistari (2026)</p>
-        <p class="text-[10px] text-slate-400 mt-1 font-semibold">Hak Cipta Panitia Sejarah · EST 2026</p>
+      <div class="sidebar-footer p-4 border-t border-navy-800/80 bg-navy-900/30">
+        <p id="sidebar-school-name">SK Demo Bistari (2026)</p>
+        <p class="sidebar-copyright">Hak Cipta Panitia Sejarah · EST 2026</p>
       </div>
     </aside>
 
