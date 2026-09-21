@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v88-7`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-7';
+const CACHE_NAME = `${CACHE_PREFIX}v88-7-teacher`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-7-teacher';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -13,6 +13,18 @@ const STATIC_CDN_HOSTS = new Set([
   'fonts.gstatic.com'
 ]);
 const STATIC_ASSETS = [
+  './teacher-panel.css?v=88.7',
+  './assets/brand-branding-approved-login-artwork.png',
+  "./branding.css?v=88.6",
+  "./assets/brand-branding-logo-horizontal-compact.png",
+  "./assets/brand-branding-app-icon-master-1024.png",
+  "./assets/brand-icons-ios-apple-touch-icon-180x180.png",
+  "./assets/brand-icons-favicon-32x32.png",
+  "./assets/brand-icons-favicon.ico",
+  "./assets/brand-icons-pwa-icon-192x192.png",
+  "./assets/brand-icons-pwa-icon-512x512.png",
+  "./assets/brand-icons-pwa-maskable-192x192.png",
+  "./assets/brand-icons-pwa-maskable-512x512.png",
   './assets/pastel-trophy.svg',
   './assets/pastel-flower.svg',
   './assets/pastel-school.svg',

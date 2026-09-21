@@ -2,23 +2,47 @@
   "id": "./",
   "name": "iSEJARAH — Pengurusan Markah & PBD",
   "short_name": "iSEJARAH",
-  "description": "Sistem Pengurusan Markah, PBD, Headcount dan Intervensi Sejarah sekolah rendah.",
+  "description": "Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu",
   "lang": "ms-MY",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "any",
-  "background_color": "#041126",
-  "theme_color": "#071A3D",
-  "categories": ["education", "productivity"],
+  "background_color": "#F8FBFF",
+  "theme_color": "#F8FBFF",
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
-      "src": "assets/isejarah-pwa-icon.png",
-      "sizes": "1254x1254",
+      "src": "assets/brand-icons-pwa-icon-192x192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/brand-icons-pwa-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/brand-icons-pwa-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/brand-icons-pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

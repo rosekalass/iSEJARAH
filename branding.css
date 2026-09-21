@@ -1,0 +1,43 @@
+/* iSEJARAH branding. Screen styling leaves printable assessment layouts intact. */
+@media screen {
+html body #app#app#app#app {
+ --ps-bg:#F8FBFF;--ps-paper:#FFFFFF;--ps-ink:#173C7A;--ps-muted:#496388;
+ --ps-line:#D8E5F3;--ps-lilac:#EEE8FD;--ps-pink:#FFE7EE;--ps-mint:#DDF8F0;
+ --ps-accent:#3D69D7;--ps-hero:linear-gradient(115deg,#E2F5FF,#E5FAF4 52%,#EEE8FD);
+}
+html.theme-dark body #app#app#app#app {
+ --ps-bg:#D5E4F3;--ps-paper:#EFF5FC;--ps-ink:#173C7A;--ps-muted:#405B80;
+ --ps-line:#BACEE5;--ps-lilac:#E1D8F7;--ps-pink:#F8DAE5;--ps-mint:#CEEDE5;
+ --ps-hero:linear-gradient(115deg,#CDE7F7,#D5ECE9,#DFD8F1);
+}
+html body #login-overlay#login-overlay {background:linear-gradient(135deg,#E2F5FF,#F8FBFF 45%,#EEE8FD)!important;overflow-y:auto}
+html body #login-overlay#login-overlay .login-premium-card{background:#fff!important;border:1px solid #D8E5F3!important;box-shadow:0 20px 64px #173c7a1c!important;border-radius:28px!important}
+html body #login-overlay#login-overlay .login-brand-visual{background:linear-gradient(150deg,#E2F5FF,#E5FAF4 65%,#FFF2DE)!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;padding:24px!important;gap:12px}
+html body #login-overlay#login-overlay .brand-login-picture{display:block;width:min(100%,260px)}
+html body #login-overlay#login-overlay .login-brand-hero-image{display:block;width:100%!important;height:auto!important;max-height:260px!important;object-fit:contain!important;border-radius:24px}
+html body #login-overlay#login-overlay .brand-login-title{font:800 clamp(1.7rem,3vw,2.6rem)/1.15 'Plus Jakarta Sans',sans-serif;color:#3D69D7;margin:0}
+html body #login-overlay#login-overlay .brand-motto{font:600 14px/1.7 'Inter',sans-serif;color:#173C7A!important;max-width:360px;text-align:center;overflow-wrap:break-word;margin:0}
+html body #login-overlay#login-overlay .login-premium-body{background:#fff!important;color:#173C7A!important}
+html body #login-overlay#login-overlay .login-field-wrap{background:#F8FBFF!important;border-color:#D8E5F3!important;color:#173C7A!important}
+html body #login-overlay#login-overlay input{color:#173C7A!important}
+html body #app#app#app#app .sidebar-brand-wordmark{width:100%!important;height:auto!important;max-height:92px;object-fit:contain!important}
+html body [id^="modal-"] :is(.bg-white,.bg-navy-900,.bg-slate-900){background:#F8FBFF!important;color:#173C7A!important}
+html body :is(button,a,input,select,textarea):focus-visible{outline:3px solid #3D69D7!important;outline-offset:3px}
+@media(max-width:640px){
+ html body #login-overlay#login-overlay{align-items:flex-start!important;padding:12px!important}
+ html body #login-overlay#login-overlay .login-brand-visual{padding:16px!important;gap:8px}
+ html body #login-overlay#login-overlay .brand-login-picture{width:min(100%,300px)}
+ html body #login-overlay#login-overlay .brand-login-title{display:none}
+ html body #login-overlay#login-overlay .brand-motto{font-size:12px;max-width:300px}
+}
+@media(prefers-reduced-motion:reduce){html body #app *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+}
+
+@media screen {
+html body #login-overlay#login-overlay :is(label,.login-section-label,.login-field-label,.login-premium-body p){color:#496388!important}
+html body #login-overlay#login-overlay .login-role-switch{background:#F8FBFF!important;border-color:#D8E5F3!important}
+html body #login-overlay#login-overlay .login-role-card{background:#F8FBFF!important;color:#173C7A!important;border-color:#D8E5F3!important}
+html body #login-overlay#login-overlay :is(#login-role-admin.border-emerald-500,#login-role-teacher.border-blue-500){background:#DDF8F0!important;color:#173C7A!important;border-color:#3D69D7!important}
+html body #login-overlay#login-overlay #login-submit-btn{background:#3D69D7!important;color:#fff!important;border-color:#3D69D7!important;box-shadow:0 6px 14px #3d69d726!important}
+}
+@media screen {html body #login-overlay#login-overlay .brand-login-title{color:#3D69D7!important}}

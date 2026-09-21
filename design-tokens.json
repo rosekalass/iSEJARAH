@@ -1,0 +1,30 @@
+{
+  "brand": "iSEJARAH",
+  "motto": "Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu",
+  "colors": {
+    "background": "#F8FBFF",
+    "surface": "#FFFFFF",
+    "sky": "#67CFFF",
+    "mint": "#4DDFC5",
+    "blue": "#3D69D7",
+    "navy": "#173C7A",
+    "peach": "#FFB36B",
+    "yellow": "#FFD766",
+    "lilac": "#A78BF7",
+    "blush": "#FFB6C9",
+    "teal": "#28BDB2",
+    "text": "#173C7A"
+  },
+  "radius": {
+    "sm": 12,
+    "md": 20,
+    "lg": 28
+  },
+  "style": [
+    "pastel",
+    "cute 3D",
+    "rounded",
+    "friendly edtech",
+    "clean"
+  ]
+}
