@@ -611,6 +611,7 @@
             name: u.name || 'Pengguna',
             email: u.email || '',
             staffId: u.staffId || '',
+            photoDataUrl: typeof u.photoDataUrl === 'string' ? u.photoDataUrl : '',
             role: (u.role === 'KETUA_PANITIA' ? 'ADMIN' : (u.role || 'GURU_SEJARAH')),
             active: u.active !== false,
             updatedAt: u.updatedAt || new Date().toISOString().split('T')[0]
@@ -5745,6 +5746,25 @@
         }) || null;
     }
 
+    function validUserPhotoDataUrl(value) {
+        return typeof value === 'string' && /^data:image\/(?:jpeg|png);base64,/i.test(value);
+    }
+
+    function updateTopbarUserPhoto(profile) {
+        const image=document.getElementById('user-avatar-photo');
+        const initial=document.getElementById('user-avatar-initial');
+        const photo=validUserPhotoDataUrl(profile?.photoDataUrl)?profile.photoDataUrl:'';
+        if(initial){
+            initial.textContent=(profile?.name||'U').trim().charAt(0).toUpperCase();
+            initial.classList.toggle('hidden',Boolean(photo));
+        }
+        if(image){
+            image.classList.toggle('hidden',!photo);
+            if(photo)image.src=photo;
+            else image.removeAttribute('src');
+        }
+    }
+
     function setSessionUser(profile) {
         currentUserId = profile.id;
         currentUserRole = profile.role === 'KETUA_PANITIA' ? 'ADMIN' : profile.role;
@@ -5771,7 +5791,7 @@
             const displayLoginId = profile.loginId || profile.mykad || profile.myKad || profile.staffId || (isAdminSession() ? 'ADMIN' : profile.email) || '—';
             userEmail.textContent = displayLoginId;
         }
-        if (userAvatar) userAvatar.textContent = (profile.name || 'U').trim().charAt(0).toUpperCase();
+        updateTopbarUserPhoto(profile);
     }
 
     function applyRoleAccessUI(skipDataInit=false) {
@@ -10318,6 +10338,75 @@
     // ==============================================================
     // ENHANCED USER MANAGEMENT
     // ==============================================================
+    const USER_PHOTO_MAX_BYTES=1024*1024;
+    let pendingUserPhotoDataUrl='';
+
+    function renderUserPhotoPreview(name='') {
+        const image=document.getElementById('form-user-photo-image');
+        const initial=document.getElementById('form-user-photo-initial');
+        const photo=validUserPhotoDataUrl(pendingUserPhotoDataUrl)?pendingUserPhotoDataUrl:'';
+        if(initial){
+            initial.textContent=(name||document.getElementById('form-user-name')?.value||'G').trim().charAt(0).toUpperCase();
+            initial.classList.toggle('hidden',Boolean(photo));
+        }
+        if(image){
+            image.classList.toggle('hidden',!photo);
+            if(photo)image.src=photo;
+            else image.removeAttribute('src');
+        }
+    }
+
+    function handleUserPhotoUpload(event) {
+        const input=event?.target;
+        const file=input?.files?.[0];
+        if(!file)return;
+        const allowed=new Set(['image/jpeg','image/png']);
+        if(!allowed.has(file.type)){
+            input.value='';
+            showAlert('Format Tidak Disokong','Pilih gambar dalam format JPG atau PNG sahaja.','info');
+            return;
+        }
+        if(file.size>USER_PHOTO_MAX_BYTES){
+            input.value='';
+            showAlert('Fail Terlalu Besar','Saiz gambar profil mesti tidak melebihi 1 MB.','info');
+            return;
+        }
+
+        const reader=new FileReader();
+        reader.onerror=()=>{
+            input.value='';
+            showAlert('Gambar Tidak Dapat Dibaca','Sila pilih fail JPG atau PNG yang sah.','danger');
+        };
+        reader.onload=()=>{
+            const source=new Image();
+            source.onerror=()=>{
+                input.value='';
+                showAlert('Gambar Tidak Sah','Fail yang dipilih tidak dapat diproses sebagai gambar.','danger');
+            };
+            source.onload=()=>{
+                const size=Math.min(source.naturalWidth,source.naturalHeight);
+                const sx=Math.max(0,(source.naturalWidth-size)/2);
+                const sy=Math.max(0,(source.naturalHeight-size)/2);
+                const canvas=document.createElement('canvas');
+                canvas.width=480;canvas.height=480;
+                const context=canvas.getContext('2d');
+                context.fillStyle='#ffffff';context.fillRect(0,0,480,480);
+                context.drawImage(source,sx,sy,size,size,0,0,480,480);
+                pendingUserPhotoDataUrl=canvas.toDataURL('image/jpeg',0.86);
+                renderUserPhotoPreview();
+            };
+            source.src=String(reader.result||'');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeUserPhoto() {
+        pendingUserPhotoDataUrl='';
+        const input=document.getElementById('form-user-photo-input');
+        if(input)input.value='';
+        renderUserPhotoPreview();
+    }
+
     function userRoleLabel(role) {
         return (role === 'ADMIN' || role === 'KETUA_PANITIA') ? 'Admin (KP Sejarah)' : 'Guru Sejarah';
     }
@@ -10384,6 +10473,7 @@
                     : '<span class="users-empty-class">Tiada kelas</span>';
 
                 const initial=(u.name||'U').trim().charAt(0).toUpperCase();
+                const photo=validUserPhotoDataUrl(u.photoDataUrl)?u.photoDataUrl:'';
                 const isSelf=u.id===currentUserId;
                 const canEdit=currentUserRole==='ADMIN';
                 const normalizedRole=u.role==='KETUA_PANITIA'?'ADMIN':u.role;
@@ -10394,7 +10484,7 @@
                 return `<tr class="users-row ${u.active===false?'users-row-inactive':''}">
                     <td class="px-5 py-4">
                         <div class="users-person">
-                            <div class="users-avatar">${escapeHtml(initial)}</div>
+                            <div class="users-avatar ${photo?'has-photo':''}">${photo?`<img class="users-avatar-photo" src="${escapeHtml(photo)}" alt="Gambar profil ${escapeHtml(u.name||'pengguna')}">`:escapeHtml(initial)}</div>
                             <div class="min-w-0">
                                 <p class="users-name">${escapeHtml(u.name||'Tanpa Nama')}</p>
                                 <p class="users-id">${escapeHtml(loginId)}${isSelf?' · Anda':''}</p>
@@ -10443,13 +10533,17 @@
         document.getElementById('form-user-staff-id').value=u?.staffId||'';
         document.getElementById('form-user-role').value=u?.role||'GURU_SEJARAH';
         document.getElementById('form-user-status').value=u?.active===false?'INACTIVE':'ACTIVE';
+        pendingUserPhotoDataUrl=validUserPhotoDataUrl(u?.photoDataUrl)?u.photoDataUrl:'';
+        const photoInput=document.getElementById('form-user-photo-input');
+        if(photoInput)photoInput.value='';
+        renderUserPhotoPreview(u?.name||'');
         document.getElementById('modal-user-title').textContent=u?'Kemaskini Pengguna':'Tambah Pengguna';
         renderUserAssignmentOptions(u?.id||'');
         const modal=document.getElementById('modal-user');modal.classList.remove('hidden');modal.classList.add('flex');lucide.createIcons();
     }
 
     function editUser(id){openUserModal(id);}
-    function closeUserModal(){const m=document.getElementById('modal-user');m.classList.add('hidden');m.classList.remove('flex');}
+    function closeUserModal(){const m=document.getElementById('modal-user');m.classList.add('hidden');m.classList.remove('flex');pendingUserPhotoDataUrl='';const input=document.getElementById('form-user-photo-input');if(input)input.value='';}
 
     function renderUserAssignmentOptions(userIdOverride='') {
         const list=document.getElementById('user-class-assignment-list'); if(!list)return;
@@ -10521,6 +10615,7 @@
             name,
             email:existing?.email||'',
             staffId:role==='GURU_SEJARAH'?loginId:'',
+            photoDataUrl:validUserPhotoDataUrl(pendingUserPhotoDataUrl)?pendingUserPhotoDataUrl:'',
             loginId,
             mykad:role==='GURU_SEJARAH'?loginId:'',
             role,
@@ -10538,6 +10633,8 @@
         });
 
         persistUsersState();
+
+        if(userId===currentUserId)updateTopbarUserPhoto(userData);
 
         if(phase10Mode==='SUPABASE'&&userData.loginId){
             const remoteUser={...userData,legacyId:userId};

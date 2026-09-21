@@ -203,7 +203,7 @@
 <meta name="msapplication-config" content="browserconfig.xml">
 <meta name="description" content="Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
 <link rel="stylesheet" href="branding.css?v=88.6">
-<link rel="stylesheet" href="teacher-panel.css?v=88.8">
+<link rel="stylesheet" href="teacher-panel.css?v=88.9">
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -387,7 +387,8 @@
 
           <!-- User Profile Display -->
           <div id="topbar-user-profile" class="flex items-center gap-2.5 p-1.5 rounded-lg bg-slate-50 border border-slate-100">
-            <div class="w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+            <div id="user-avatar" class="w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden">
+              <img id="user-avatar-photo" class="hidden" alt="Gambar profil pengguna">
               <span id="user-avatar-initial">P</span>
             </div>
             <div class="hidden md:block text-left pr-1">
@@ -2720,10 +2721,27 @@
       </div>
       <div class="p-6 overflow-y-auto space-y-5">
         <input id="form-user-id" type="hidden">
+        <div class="user-photo-editor">
+          <div id="form-user-photo-preview" class="user-photo-preview" aria-label="Pratonton gambar profil">
+            <img id="form-user-photo-image" class="hidden" alt="Pratonton gambar profil guru">
+            <span id="form-user-photo-initial">G</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-bold text-slate-700">Gambar Profil Guru</p>
+            <p class="text-[10px] text-slate-500 mt-1">Format JPG atau PNG. Saiz fail maksimum 1 MB. Gambar akan dipotong secara automatik supaya kemas.</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <label class="user-photo-upload-button">
+                <input id="form-user-photo-input" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" class="hidden" onchange="handleUserPhotoUpload(event)">
+                <i data-lucide="image-up" class="w-4 h-4"></i> Pilih Gambar
+              </label>
+              <button type="button" onclick="removeUserPhoto()" class="user-photo-remove-button"><i data-lucide="trash-2" class="w-4 h-4"></i> Buang</button>
+            </div>
+          </div>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Penuh *</label>
-            <input id="form-user-name" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Contoh: Cikgu Ahmad bin Ali">
+            <input id="form-user-name" oninput="renderUserPhotoPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Contoh: Cikgu Ahmad bin Ali">
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1.5">MyKad / User ID Guru</label>
@@ -3326,7 +3344,7 @@
       </div>
   </div>
 
-  <script src="app.js?v=88.5"></script>
+  <script src="app.js?v=88.9"></script>
   <script src="modules/upgrades.js"></script>
   <script src="modules/workspace.js?v=86.1"></script>
   <script src="responsive.js"></script>
