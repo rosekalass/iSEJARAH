@@ -5655,7 +5655,7 @@
     let selectedLoginRole = 'ADMIN';
 
     const ROLE_ALLOWED_VIEWS = {
-        ADMIN: ['dashboard', 'teacher-dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings'],
+        ADMIN: ['dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings'],
         GURU_SEJARAH: ['teacher-dashboard', 'completeness', 'attention', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'intervention']
     };
 
@@ -5792,6 +5792,7 @@
             userEmail.textContent = displayLoginId;
         }
         updateTopbarUserPhoto(profile);
+        if(typeof window.refreshWorkspaceGreeting==='function')window.refreshWorkspaceGreeting(profile);
     }
 
     function applyRoleAccessUI(skipDataInit=false) {
@@ -5805,6 +5806,7 @@
 
         if (isAdminSession()) {
             allNav.forEach(el => el.classList.remove('hidden'));
+            document.getElementById('nav-teacher-dashboard')?.classList.add('hidden');
             ['nav-group-main','nav-group-data','nav-group-assessment','nav-group-analytics','nav-group-admin'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
             if(adminGroupLabel)adminGroupLabel.textContent='Laporan & Pentadbiran';
         } else {
@@ -10634,7 +10636,7 @@
 
         persistUsersState();
 
-        if(userId===currentUserId)updateTopbarUserPhoto(userData);
+        if(userId===currentUserId){updateTopbarUserPhoto(userData);if(typeof window.refreshWorkspaceGreeting==='function')window.refreshWorkspaceGreeting(userData);}
 
         if(phase10Mode==='SUPABASE'&&userData.loginId){
             const remoteUser={...userData,legacyId:userId};
