@@ -50,7 +50,7 @@
     for(const id of ['view-dashboard','view-teacher-dashboard']){
       const view=document.getElementById(id);if(!view||view.querySelector('.workspace-home'))continue;
       const home=document.createElement('article');home.className='workspace-home';
-      home.innerHTML='<div class="workspace-heading"><div><p>RUANG KERJA PANITIA</p><h2>Apa yang ingin cikgu buat hari ini?</h2><span>Pengisian, pemantauan dan pelaporan dalam satu tempat.</span></div><button type="button" data-search>Cari semua modul <small>Ctrl / ⌘ K</small></button></div><div class="workspace-actions"></div><details><summary>Panduan ringkas aliran kerja</summary><ol><li>Pilih sesi, tahun dan kelas sebelum membuat pengisian.</li><li>Masukkan Markah atau TP, kemudian tekan Simpan pada modul berkenaan.</li><li>Semak Kelengkapan dan Headcount untuk mengenal pasti tindakan susulan.</li><li>Jana Pratonton Laporan sebelum cetak atau simpan PDF.</li></ol><p>Tarikh ujian ditetapkan oleh Admin di Tetapan Sekolah. Semak status simpan dalam modul sebelum keluar.</p></details><p class="workspace-connection" role="status"></p>';
+      home.innerHTML='<div class="workspace-heading"><div class="workspace-heading-main"><div class="workspace-profile-avatar"><img class="workspace-profile-photo" alt="Gambar profil pengguna"><span class="workspace-profile-initial">G</span></div><div class="workspace-welcome-copy"><p>RUANG KERJA PANITIA</p><span class="workspace-greeting">Assalamualaikum, Cikgu!</span><h2>Cikgu nak buat apa hari ini?</h2><span class="workspace-subtitle">Pengisian, pemantauan dan pelaporan dalam satu tempat.</span></div></div><button type="button" data-search>Cari semua modul <small>Ctrl / ⌘ K</small></button></div><div class="workspace-actions"></div><details><summary>Panduan ringkas aliran kerja</summary><ol><li>Pilih sesi, tahun dan kelas sebelum membuat pengisian.</li><li>Masukkan Markah atau TP, kemudian tekan Simpan pada modul berkenaan.</li><li>Semak Kelengkapan dan Headcount untuk mengenal pasti tindakan susulan.</li><li>Jana Pratonton Laporan sebelum cetak atau simpan PDF.</li></ol><p>Tarikh ujian ditetapkan oleh Admin di Tetapan Sekolah. Semak status simpan dalam modul sebelum keluar.</p></details><p class="workspace-connection" role="status"></p>';
       home.querySelector('[data-search]').addEventListener('click',open);
       workflows.forEach(([target,label,note,icon])=>{
         const b=document.createElement('button');b.type='button';b.dataset.target=target;
@@ -65,6 +65,20 @@
     }
     refresh();window.lucide?.createIcons();
   }
+  function refreshGreeting(profile={}){
+    const rawName=String(profile.name||document.getElementById('user-display-name')?.textContent||'Cikgu').trim();
+    const displayName=/^(cikgu|puan|encik|ustaz|ustazah|dr\.?|teacher)\b/i.test(rawName)?rawName:`Cikgu ${rawName}`;
+    const photo=typeof profile.photoDataUrl==='string'&&/^data:image\/(?:jpeg|png);base64,/i.test(profile.photoDataUrl)?profile.photoDataUrl:'';
+    document.querySelectorAll('.workspace-home').forEach(home=>{
+      const greeting=home.querySelector('.workspace-greeting');
+      const image=home.querySelector('.workspace-profile-photo');
+      const initial=home.querySelector('.workspace-profile-initial');
+      if(greeting)greeting.textContent=`Assalamualaikum, ${displayName} yang shantekkk!`;
+      if(initial){initial.textContent=(rawName||'G').charAt(0).toUpperCase();initial.hidden=Boolean(photo);}
+      if(image){image.hidden=!photo;if(photo)image.src=photo;else image.removeAttribute('src');}
+    });
+  }
+  window.refreshWorkspaceGreeting=refreshGreeting;
   function refresh(){
     document.querySelectorAll('.workspace-actions button').forEach(b=>{b.hidden=!allowed(b.dataset.target);});
     document.querySelectorAll('.workspace-connection').forEach(el=>{
@@ -76,6 +90,6 @@
   // Refresh only when existing role/navigation controls change, including after login.
   const sidebar=document.getElementById('sidebar');
   if(sidebar)new MutationObserver(refresh).observe(sidebar,{subtree:true,attributes:true,attributeFilter:['class']});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
-  else install();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{install();refreshGreeting();},{once:true});
+  else{install();refreshGreeting();}
 })();
