@@ -65,7 +65,21 @@
     }
     refresh();window.lucide?.createIcons();
   }
-  function refreshGreeting(profile={}){
+  const greetings={
+    P:['yang shantekkkk','yang ayu jelita','yang manis','yang cantik menarik tertarik, cikgu memang the boomm!!!','yang anggun bergaya','yang ceria berseri','yang jelita dan bijaksana','yang comel dan hebat','yang penuh pesona','yang manis senyumannya'],
+    L:['yang hensemmmm','yang segak bergaya','yang sadooooo!!! Eh, sado ke???','yang soleh','yang super cool','yang macho dan bijaksana','yang kacak bergaya','yang tampan lagi hebat','yang gentleman','yang sempoi dan mantap'],
+    neutral:['yang hebat','yang penuh semangat','yang super cool','yang ceria','yang luar biasa','yang mantap','yang kreatif','yang inspiratif','yang berdedikasi','yang sentiasa awesome']
+  };
+  let greetingIndex=0;
+  function nextGreeting(profile){
+    const key='isejarah-greeting-'+String(profile.id||profile.loginId||'user');
+    let previous=-1;
+    try{previous=Number(localStorage.getItem(key)??-1);}catch(_){}
+    greetingIndex=(Number.isInteger(previous)&&previous>=0?previous+1:Math.floor(Math.random()*10))%10;
+    try{localStorage.setItem(key,String(greetingIndex));}catch(_){}
+  }
+  function refreshGreeting(profile={},newLogin=false){
+    if(newLogin)nextGreeting(profile);
     const rawName=String(profile.name||document.getElementById('user-display-name')?.textContent||'Cikgu').trim();
     const displayName=/^(cikgu|puan|encik|ustaz|ustazah|dr\.?|teacher)\b/i.test(rawName)?rawName:`Cikgu ${rawName}`;
     const photo=typeof profile.photoDataUrl==='string'&&/^data:image\/(?:jpeg|png);base64,/i.test(profile.photoDataUrl)?profile.photoDataUrl:'';
@@ -73,7 +87,10 @@
       const greeting=home.querySelector('.workspace-greeting');
       const image=home.querySelector('.workspace-profile-photo');
       const initial=home.querySelector('.workspace-profile-initial');
-      if(greeting)greeting.textContent=`Assalamualaikum, ${displayName} yang shantekkk!`;
+      const gender=String(profile.gender||'').toUpperCase();
+      const phrases=greetings[gender]||greetings.neutral;
+        const phrase=phrases[greetingIndex];
+        if(greeting)greeting.textContent=`Assalamualaikum, ${displayName} ${phrase}${/[!?]$/.test(phrase)?'':'!'}`;
       if(initial){initial.textContent=(rawName||'G').charAt(0).toUpperCase();initial.hidden=Boolean(photo);}
       if(image){image.hidden=!photo;if(photo)image.src=photo;else image.removeAttribute('src');}
     });
