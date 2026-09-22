@@ -32,6 +32,13 @@ html body #app#app#app#app #view-reports .report-sheet [class~="sm:grid-cols-2"]
 html body #app#app#app#app #view-reports .report-sheet [class~="sm:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 html body #app#app#app#app #view-reports .report-sheet [class~="sm:grid-cols-4"]{grid-template-columns:repeat(4,minmax(0,1fr))!important}
 html body #app#app#app#app #view-reports .report-sheet [class~="sm:grid-cols-6"]{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+/* Explicit report alignment also applies to the detached PDF capture tree. */
+html body #app#app#app#app #view-reports .report-sheet .report-headcount-grid>div{display:block!important;text-align:center!important;padding:10px 6px!important}
+html body #app#app#app#app #view-reports .report-sheet .report-headcount-grid :is(b,p){display:block!important;width:100%!important;text-align:center!important;line-height:1.2!important;margin:0!important;padding:0!important}
+html body #app#app#app#app #view-reports .report-sheet .report-headcount-grid p{margin-top:6px!important}
+html body #app#app#app#app #view-reports .report-sheet table :is(th,td).text-center,
+html body #app#app#app#app #view-reports .report-sheet table .report-status-cell{text-align:center!important;vertical-align:middle!important}
+html body #app#app#app#app #view-reports .report-sheet .report-status-chip{display:block!important;width:auto!important;margin:0 auto!important;padding:5px 6px!important;line-height:1.2!important;text-align:center!important;vertical-align:middle!important}
 @media print{
  html body #app#app#app#app #view-reports .report-sheet img{display:block!important;visibility:visible!important;opacity:1!important}
  html body #app#app#app#app #view-reports .report-sheet *{box-shadow:none!important}

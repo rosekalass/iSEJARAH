@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v88-11-workspace-greeting`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-11-workspace-greeting';
+const CACHE_NAME = `${CACHE_PREFIX}v88-12-greetings-pdf`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-12-greetings-pdf';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -40,16 +40,16 @@ const STATIC_ASSETS = [
   './assets/pastel-heart.svg',
   './assets/pastel-printer.svg',
   './pastel.css?v=88.4',
-  './report-a4.css?v=88.5',
+  './report-a4.css?v=88.12',
   './assets/pastel-clay-atlas.png',
   './readability.css?v=86.3',
   './',
   './index.html',
   './styles.css?v=83',
   './polish.css?v=86.1',
-  './workspace.css?v=88.11',
-  './modules/workspace.js?v=88.11',
-  './app.js?v=88.11',
+  './workspace.css?v=88.12',
+  './modules/workspace.js?v=88.12',
+  './app.js?v=88.12',
   './responsive.js',
   './pwa.js',
   './config.js',

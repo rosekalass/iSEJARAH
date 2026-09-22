@@ -612,6 +612,7 @@
             email: u.email || '',
             staffId: u.staffId || '',
             photoDataUrl: typeof u.photoDataUrl === 'string' ? u.photoDataUrl : '',
+            gender: ['L','P'].includes(u.gender) ? u.gender : '',
             role: (u.role === 'KETUA_PANITIA' ? 'ADMIN' : (u.role || 'GURU_SEJARAH')),
             active: u.active !== false,
             updatedAt: u.updatedAt || new Date().toISOString().split('T')[0]
@@ -5792,7 +5793,7 @@
             userEmail.textContent = displayLoginId;
         }
         updateTopbarUserPhoto(profile);
-        if(typeof window.refreshWorkspaceGreeting==='function')window.refreshWorkspaceGreeting(profile);
+        if(typeof window.refreshWorkspaceGreeting==='function')window.refreshWorkspaceGreeting(profile,true);
     }
 
     function applyRoleAccessUI(skipDataInit=false) {
@@ -9627,7 +9628,7 @@
         const progressRows=d.pbdProgress.map(x=>{
             const label=x.delta===null?'—':x.delta>0?`↑ +${x.delta}`:x.delta<0?`↓ ${x.delta}`:'→ Kekal';
             const status=x.status==='DINILAI_SEMULA'?'Dinilai semula':x.status==='DIWARISI'?'Diwarisi dari Pertengahan':'Belum dinilai';
-            return `<tr class="border-t border-slate-100"><td class="p-2 font-bold text-indigo-700">${reportSafe(x.dskp.standardLearningCode)}</td><td class="p-2">${reportSafe(x.dskp.standardLearningText)}</td><td class="p-2 text-center font-black">${x.mid?.tp?`TP${x.mid.tp}`:'—'}</td><td class="p-2 text-center font-black">${x.end?.tp?`TP${x.end.tp}`:'—'}</td><td class="p-2 text-center ${x.delta>0?'text-emerald-700':x.delta<0?'text-rose-700':'text-slate-600'}">${label}</td><td class="p-2"><span class="report-status-chip ${x.status==='DIWARISI'?'inherited':''}">${status}</span></td></tr>`;
+            return `<tr class="border-t border-slate-100"><td class="p-2 font-bold text-indigo-700">${reportSafe(x.dskp.standardLearningCode)}</td><td class="p-2">${reportSafe(x.dskp.standardLearningText)}</td><td class="p-2 text-center font-black">${x.mid?.tp?`TP${x.mid.tp}`:'—'}</td><td class="p-2 text-center font-black">${x.end?.tp?`TP${x.end.tp}`:'—'}</td><td class="p-2 text-center ${x.delta>0?'text-emerald-700':x.delta<0?'text-rose-700':'text-slate-600'}">${label}</td><td class="p-2 report-status-cell"><span class="report-status-chip ${x.status==='DIWARISI'?'inherited':''}">${status}</span></td></tr>`;
         }).join('');
         const improved=d.pbdProgress.filter(x=>x.delta>0).length,stable=d.pbdProgress.filter(x=>x.delta===0).length,declined=d.pbdProgress.filter(x=>x.delta<0).length,inherited=d.pbdProgress.filter(x=>x.status==='DIWARISI').length;
         const strengths=d.pbdProgress.filter(x=>Number(x.end?.tp||x.mid?.tp)>=4).slice(0,4);
@@ -9639,12 +9640,12 @@
           <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">${reportKpi('Purata Markah',d.avgMark==null?'—':formatWholePercent(d.avgMark),'Individu')}${reportKpi('Gred Semasa',latest?calculateGrade(latest.score.percentage):'—',latest?.assessment.name||'Tiada pentaksiran')}${reportKpi('TP Pertengahan → Akhir',`${d.midOverall?.overallTP?'TP'+d.midOverall.overallTP:'—'} → ${d.endOverall?.overallTP?'TP'+d.endOverall.overallTP:'—'}`)}${reportKpi('Sasaran ETR',hc?.etr==null?'—':formatWholePercent(hc.etr),targetGap==null?'Tiada jurang':targetGap<=0?'Sasaran dicapai':`Perlu +${targetGap.toFixed(1)} mata`)}${reportKpi('Status Perhatian',priority,d.nearMiss?.nearMiss?`Near Miss ${d.nearMiss.targetGrade}: +${d.nearMiss.gap}`:'Berdasarkan semua indikator')}${reportKpi('Kelengkapan Data',formatWholePercent(d.completion),`${d.pbdRecorded.length}/${d.dskp.length} SP PBD`)}</div>
           <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">${reportDistributionHtml('Trend Markah (%)',markTrend,100)}<div class="rounded-xl border border-slate-200 p-4"><h3 class="text-xs font-black text-slate-800 mb-3">Ringkasan Progression</h3><div class="space-y-2 text-[10px]"><p><b>Perubahan keseluruhan:</b> ${totalChange===null?'—':`${totalChange>0?'↑ +':totalChange<0?'↓ ':'→ '}${totalChange.toFixed(1)} mata peratus`}</p><p><b>Perbandingan kelas:</b> ${d.avgMark==null||d.classAverage==null?'—':`${formatWholePercent(d.avgMark)} berbanding ${formatWholePercent(d.classAverage)} (${reportSafe(d.classBand)})`}</p><p><b>Near Miss:</b> ${d.nearMiss?.nearMiss?`Gred ${d.nearMiss.currentGrade} → ${d.nearMiss.targetGrade}, perlu +${d.nearMiss.gap} mata`:'Tiada Near Miss pada pencapaian terkini'}</p><p><b>Status sasaran:</b> ${reportSafe(hc?.status||'Belum Direkod')}</p></div></div></div>
           <div class="mt-5"><h3 class="text-xs font-black text-slate-800 mb-2">Perbandingan Markah dan Sasaran</h3><div class="report-table-frame rounded-xl border border-slate-200"><table class="report-data-table report-mark-comparison w-full text-[9px]"><colgroup><col style="width:29%"><col style="width:11%"><col style="width:11%"><col style="width:8%"><col style="width:13%"><col style="width:10%"><col style="width:18%"></colgroup><thead class="bg-slate-50"><tr><th class="p-2 text-left">Pentaksiran</th><th class="p-2">Markah</th><th class="p-2">Peratus</th><th class="p-2">Gred</th><th class="p-2">Perubahan</th><th class="p-2">Sasaran</th><th class="p-2 text-left">Catatan</th></tr></thead><tbody>${markRows||`<tr><td colspan="7" class="p-4 text-center text-slate-400">Tiada markah direkodkan.</td></tr>`}</tbody></table></div></div>
-          <div class="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4"><p class="text-[10px] font-black uppercase text-blue-700">Perjalanan Headcount</p><div class="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-[9px]">${[['TOV',hc?.toy?.value],['OT1',hc?.oti1],['UPSA/AR1',hc?.ar1?.value],['OT2',hc?.oti2],['UASA/AR2',hc?.ar2?.value],['ETR',hc?.etr]].map(([l,v])=>`<div class="rounded-lg bg-white border border-blue-100 p-2"><b>${l}</b><p class="font-black mt-1">${v==null?'—':formatWholePercent(v)}</p></div>`).join('')}</div></div>
+          <div class="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4"><p class="text-[10px] font-black uppercase text-blue-700">Perjalanan Headcount</p><div class="report-headcount-grid mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-[9px]">${[['TOV',hc?.toy?.value],['OT1',hc?.oti1],['UPSA/AR1',hc?.ar1?.value],['OT2',hc?.oti2],['UASA/AR2',hc?.ar2?.value],['ETR',hc?.etr]].map(([l,v])=>`<div class="rounded-lg bg-white border border-blue-100 p-2"><b>${l}</b><p class="font-black mt-1">${v==null?'—':formatWholePercent(v)}</p></div>`).join('')}</div></div>
 
           <div class="report-page-break"></div>${reportHeaderHtml('Progression PBD dan Standard Pembelajaran', `${d.student.name} · Sesi ${academicYear}`)}
           <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">${reportKpi('Meningkat',improved,'SP')}${reportKpi('Kekal',stable,'SP')}${reportKpi('Menurun',declined,'SP')}${reportKpi('Data Diwarisi',inherited,'Belum dinilai semula')}</div>
           <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">${reportDistributionHtml('Taburan PBD — '+periodName,tpDist)}<div class="rounded-xl border border-slate-200 p-4"><h3 class="text-xs font-black text-slate-800 mb-2">Kekuatan dan Jurang</h3><p class="text-[10px] font-bold text-emerald-700">Kekuatan</p><ul class="text-[9px] text-slate-600 list-disc ml-4">${strengths.length?strengths.map(x=>`<li>${reportSafe(x.dskp.standardLearningCode)} · ${reportSafe(x.dskp.standardLearningText)}</li>`).join(''):'<li>Belum ada SP pada TP4–TP6.</li>'}</ul><p class="text-[10px] font-bold text-rose-700 mt-3">Perlu Diperkukuh</p><ul class="text-[9px] text-slate-600 list-disc ml-4">${gaps.length?gaps.map(x=>`<li>${reportSafe(x.dskp.standardLearningCode)} · ${reportSafe(x.dskp.standardLearningText)}</li>`).join(''):'<li>Tiada SP direkodkan di bawah TP3.</li>'}</ul></div></div>
-          <div class="mt-5"><h3 class="text-xs font-black text-slate-800 mb-2">Pertengahan → Akhir Tahun</h3><div class="report-table-frame rounded-xl border border-slate-200"><table class="report-data-table w-full text-[8px]"><colgroup><col style="width:9%"><col style="width:39%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:20%"></colgroup><thead class="bg-slate-50"><tr><th class="p-2 text-left">SP</th><th class="p-2 text-left">Standard Pembelajaran</th><th class="p-2">Pertengahan</th><th class="p-2">Akhir</th><th class="p-2">Progress</th><th class="p-2 text-left">Status Data</th></tr></thead><tbody>${progressRows||`<tr><td colspan="6" class="p-4 text-center text-slate-400">Tiada data PBD.</td></tr>`}</tbody></table></div></div>
+          <div class="mt-5"><h3 class="text-xs font-black text-slate-800 mb-2">Pertengahan → Akhir Tahun</h3><div class="report-table-frame rounded-xl border border-slate-200"><table class="report-data-table w-full text-[8px]"><colgroup><col style="width:9%"><col style="width:39%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:20%"></colgroup><thead class="bg-slate-50"><tr><th class="p-2 text-left">SP</th><th class="p-2 text-left">Standard Pembelajaran</th><th class="p-2">Pertengahan</th><th class="p-2">Akhir</th><th class="p-2">Progress</th><th class="p-2 report-status-cell">Status Data</th></tr></thead><tbody>${progressRows||`<tr><td colspan="6" class="p-4 text-center text-slate-400">Tiada data PBD.</td></tr>`}</tbody></table></div></div>
 
           <div class="report-page-break"></div>${reportHeaderHtml('Intervensi dan Pelan Tindakan', `${d.student.name} · ${d.cls?.name||''}`)}
           <div class="mt-5 rounded-xl border ${d.attention?.priority?'border-amber-200 bg-amber-50':'border-emerald-200 bg-emerald-50'} p-4"><p class="text-[10px] font-black uppercase">Rumusan Prestasi</p><p class="text-xs font-bold mt-1">${reportSafe(priority)}</p><div class="mt-2 text-[10px] space-y-1">${(d.attention?.reasons||[]).length?d.attention.reasons.map(r=>`<p>• ${reportSafe(r)}</p>`).join(''):'<p>Tiada indikator risiko kritikal berdasarkan markah dan PBD semasa.</p>'}</div></div>
@@ -9820,6 +9821,16 @@
                 const bounds=target.getBoundingClientRect();
                 const contentBottom=Math.max(...[...target.children].filter(el=>!el.classList.contains('report-sheet-number')).map(el=>el.getBoundingClientRect().bottom));
                 if(contentBottom>bounds.top+1070)throw new Error('Kandungan melebihi halaman A4. Gunakan Cetak untuk pemisahan halaman automatik.');
+                // Compensate for the raster renderer's low Arial baseline inside compact cells.
+                // Only the capture copy changes; normal preview and browser print stay untouched.
+                target.querySelectorAll('.report-headcount-grid b,.report-headcount-grid p,.report-status-chip,td.text-center').forEach(cell=>{
+                    if(cell.children.length)return;
+                    const text=document.createElement('span');
+                    text.textContent=cell.textContent;
+                    text.style.setProperty('display','block','important');
+                    text.style.setProperty('transform','translateY(-0.2em)','important');
+                    cell.replaceChildren(text);
+                });
                 const canvas=await html2canvas(target,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#fff',logging:false,scrollX:0,scrollY:0,windowWidth:794,windowHeight:1123,width:794,height:1123});
                 canvases.push(canvas);
             } finally { captureRoot.remove(); }
@@ -10535,6 +10546,7 @@
         document.getElementById('form-user-staff-id').value=u?.staffId||'';
         document.getElementById('form-user-role').value=u?.role||'GURU_SEJARAH';
         document.getElementById('form-user-status').value=u?.active===false?'INACTIVE':'ACTIVE';
+        document.getElementById('form-user-gender').value=['L','P'].includes(u?.gender)?u.gender:'';
         pendingUserPhotoDataUrl=validUserPhotoDataUrl(u?.photoDataUrl)?u.photoDataUrl:'';
         const photoInput=document.getElementById('form-user-photo-input');
         if(photoInput)photoInput.value='';
@@ -10618,6 +10630,7 @@
             email:existing?.email||'',
             staffId:role==='GURU_SEJARAH'?loginId:'',
             photoDataUrl:validUserPhotoDataUrl(pendingUserPhotoDataUrl)?pendingUserPhotoDataUrl:'',
+            gender: document.getElementById('form-user-gender').value,
             loginId,
             mykad:role==='GURU_SEJARAH'?loginId:'',
             role,
