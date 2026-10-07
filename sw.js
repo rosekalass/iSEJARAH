@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v88-13-gender-field`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-13-gender-field';
+const CACHE_NAME = `${CACHE_PREFIX}v88-6-pbd`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-6-pbd';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -13,18 +13,16 @@ const STATIC_CDN_HOSTS = new Set([
   'fonts.gstatic.com'
 ]);
 const STATIC_ASSETS = [
-  './teacher-panel.css?v=88.9',
-  './assets/brand-branding-approved-login-artwork.png',
   "./branding.css?v=88.6",
-  "./assets/brand-branding-logo-horizontal-compact.png",
-  "./assets/brand-branding-app-icon-master-1024.png",
-  "./assets/brand-icons-ios-apple-touch-icon-180x180.png",
-  "./assets/brand-icons-favicon-32x32.png",
-  "./assets/brand-icons-favicon.ico",
-  "./assets/brand-icons-pwa-icon-192x192.png",
-  "./assets/brand-icons-pwa-icon-512x512.png",
-  "./assets/brand-icons-pwa-maskable-192x192.png",
-  "./assets/brand-icons-pwa-maskable-512x512.png",
+  "./branding/logo-horizontal-compact.png",
+  "./branding/app-icon-master-1024.png",
+  "./icons/ios/apple-touch-icon-180x180.png",
+  "./icons/favicon-32x32.png",
+  "./icons/favicon.ico",
+  "./icons/pwa/icon-192x192.png",
+  "./icons/pwa/icon-512x512.png",
+  "./icons/pwa/maskable-192x192.png",
+  "./icons/pwa/maskable-512x512.png",
   './assets/pastel-trophy.svg',
   './assets/pastel-flower.svg',
   './assets/pastel-school.svg',
@@ -39,22 +37,22 @@ const STATIC_ASSETS = [
   './assets/pastel-target.svg',
   './assets/pastel-heart.svg',
   './assets/pastel-printer.svg',
-  './pastel.css?v=88.4',
-  './report-a4.css?v=88.13',
+  './pastel.css?v=88.6',
+  './report-a4.css?v=88.5',
   './assets/pastel-clay-atlas.png',
   './readability.css?v=86.3',
   './',
   './index.html',
-  './styles.css?v=83',
+  './styles.css?v=88.6',
   './polish.css?v=86.1',
-  './workspace.css?v=88.13',
-  './modules/workspace.js?v=88.13',
-  './app.js?v=88.13',
+  './workspace.css?v=86.1',
+  './modules/workspace.js?v=86.1',
+  './app.js?v=88.6',
   './responsive.js',
   './pwa.js',
   './config.js',
   './tailwind.config.js',
-  './modules/upgrades.js',
+  './modules/upgrades.js?v=88.6',
   './manifest.webmanifest',
   OFFLINE_URL,
   './assets/background-1.jpg',

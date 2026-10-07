@@ -10,6 +10,32 @@ html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-5{back
 html body #app#app#app#app main #view-pbd :is(select,.pbd-tp-pill).pbd-tp-6{background:#f4dcef!important;color:#733d6b!important;border-color:#733d6b!important}
 }
 
+/* v88.6 — final dark-mode contrast for responsive completeness cards. */
+@media screen and (max-width:760px){
+  html.theme-dark body #app main #completeness-content .completion-mobile article header b,
+  html.theme-dark body #app main #completeness-content .completion-mobile article .mobile-progress label span,
+  html.theme-dark body #app main #completeness-content .completion-mobile article .mobile-progress label b{
+    color:#F8FAFF!important;
+  }
+  html.theme-dark body #app main #completeness-content .completion-mobile article header small,
+  html.theme-dark body #app main #completeness-content .completion-mobile article>p{
+    color:#B9CCE5!important;
+  }
+  html.theme-dark body #app main #completeness-content .completion-mobile .completion-actions .text-action{
+    color:#FFD5E7!important;background:#421A3A!important;border-color:#98516F!important;
+  }
+  html.theme-dark body #app main #completeness-content .completion-mobile .completion-actions .text-action.pbd{
+    color:#B7FFF7!important;background:#123F42!important;border-color:#317F7A!important;
+  }
+}
+
+@media screen {
+  html.theme-dark body #app#app#app main #completeness-content .completion-actions .text-action{color:#FFD5E7!important;background:#421A3A!important;border-color:#98516F!important}
+  html.theme-dark body #app#app#app main #completeness-content .completion-actions .text-action.pbd{color:#B7FFF7!important;background:#123F42!important;border-color:#317F7A!important}
+  html.theme-dark body #app#app#app main #completeness-content .completeness-table .completion-actions .completion-ok{color:#075E5A!important}
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile .completion-actions .completion-ok{color:#8EE7DF!important}
+}
+
 
 /* v88.2: executive report cover has an explicit paired surface and ink. */
 html body #app#app#app main #view-executive-report #executive-print .report-cover{
@@ -285,6 +311,23 @@ html body #login-overlay{background:linear-gradient(130deg,#f7dceb,#e5dafa 50%,#
 #app#app #view-completeness{--module-art:url("assets/pastel-check.svg")}
 #app#app #view-teacher-dashboard{--module-art:url("assets/pastel-home.svg")}
 #app#app #view-admin-tools{--module-art:url("assets/pastel-gear.svg")}
+
+/* Keep this block last: the cards are dark surfaces in app dark mode. */
+@media screen and (max-width:760px){
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile article header b,
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile article .mobile-progress label :is(span,b){color:#F8FAFF!important}
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile article header small,
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile article>p{color:#B9CCE5!important}
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile .completion-actions .text-action{color:#FFD5E7!important;background:#421A3A!important;border-color:#98516F!important}
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile .completion-actions .text-action.pbd{color:#B7FFF7!important;background:#123F42!important;border-color:#317F7A!important}
+}
+
+@media screen {
+  html.theme-dark body #app#app#app main #completeness-content .completion-actions .text-action{color:#FFD5E7!important;background:#421A3A!important;border-color:#98516F!important}
+  html.theme-dark body #app#app#app main #completeness-content .completion-actions .text-action.pbd{color:#B7FFF7!important;background:#123F42!important;border-color:#317F7A!important}
+  html.theme-dark body #app#app#app main #completeness-content .completeness-table .completion-actions .completion-ok{color:#075E5A!important}
+  html.theme-dark body #app#app#app main #completeness-content .completion-mobile .completion-actions .completion-ok{color:#8EE7DF!important}
+}
 
 
 

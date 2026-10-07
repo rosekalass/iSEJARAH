@@ -8381,6 +8381,96 @@ html.theme-dark .upgrade-heading{background:linear-gradient(120deg,rgba(76,29,14
   width:100%!important;min-width:0!important;max-width:100%!important;table-layout:fixed!important;
 }
 
+/* v88.6 — reliable, compact and responsive data tables. */
+@media screen {
+  #completeness-content{display:grid;gap:16px}
+  #completeness-content .completion-summary{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;
+  }
+  #completeness-content .completion-summary article{
+    min-width:0;padding:15px 17px;border:1px solid #CFE0ED;border-radius:16px;
+    background:linear-gradient(145deg,#FFFFFF,#F4F1FF);box-shadow:0 8px 22px rgba(28,45,86,.06);
+  }
+  #completeness-content .completion-summary span{display:block;color:#526176;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+  #completeness-content .completion-summary b{display:block;margin-top:5px;color:#163D7A;font-size:22px;line-height:1}
+  html.theme-dark #completeness-content .completion-summary article{border-color:#334E72;background:linear-gradient(145deg,#101A42,#15104B)}
+  html.theme-dark #completeness-content .completion-summary span{color:#B9CCE5}
+  html.theme-dark #completeness-content .completion-summary b{color:#9CEEF0}
+
+  #completeness-content .completeness-table-shell{padding:0!important;overflow:auto;border:1px solid #CFE0ED;border-radius:18px}
+  #completeness-content .completeness-table{min-width:840px!important;table-layout:fixed}
+  #completeness-content .completeness-table th{position:sticky;top:0;z-index:2;padding:13px 14px!important;white-space:nowrap}
+  #completeness-content .completeness-table th:nth-child(1){width:20%}
+  #completeness-content .completeness-table th:nth-child(2){width:9%}
+  #completeness-content .completeness-table th:nth-child(3),
+  #completeness-content .completeness-table th:nth-child(4){width:17%}
+  #completeness-content .completeness-table th:nth-child(5){width:17%}
+  #completeness-content .completeness-table th:nth-child(6){width:20%}
+  #completeness-content .completeness-table td{padding:13px 14px!important;vertical-align:middle;border-color:#DCE7F0!important}
+  #completeness-content .completeness-table tbody tr:nth-child(even) td{background:#F7F4FF!important}
+  #completeness-content .completeness-table tbody tr:hover td{background:#EDF9FA!important}
+  html.theme-dark #completeness-content .completeness-table tbody tr:nth-child(even) td{background:#111A42!important}
+  html.theme-dark #completeness-content .completeness-table tbody tr:hover td{background:#142750!important}
+  #completeness-content .table-number{font-size:14px;color:#163D7A}
+  html.theme-dark #completeness-content .table-number{color:#EAF4FF}
+  #completeness-content .completion-cell{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:9px}
+  #completeness-content .completion-track{display:block;height:7px;overflow:hidden;border-radius:99px;background:#E7EAF4}
+  #completeness-content .completion-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#FF8DB8,#B79CFF)}
+  #completeness-content .completion-track.pbd i{background:linear-gradient(90deg,#78D9D2,#80BDF3)}
+  html.theme-dark #completeness-content .completion-track{background:#263354}
+  #completeness-content .missing-count{display:block;color:#8A3158;font-weight:800;line-height:1.6}
+  #completeness-content .missing-count.zero{color:#25766F}
+  html.theme-dark #completeness-content .missing-count{color:#FFB2D1}
+  html.theme-dark #completeness-content .missing-count.zero{color:#8EE7DF}
+  #completeness-content .completion-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  #completeness-content .completion-actions .text-action{
+    min-height:34px;padding:7px 11px;border:1px solid #F2A9C7;border-radius:10px;color:#8C2453!important;background:#FFF1F7!important;font-weight:900
+  }
+  #completeness-content .completion-actions .text-action.pbd{border-color:#9EDDD8;color:#126A65!important;background:#EAFBF8!important}
+  #completeness-content .completion-actions .text-action:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(131,43,83,.13)}
+  #completeness-content .completion-actions .text-action:focus-visible{outline:3px solid rgba(188,30,224,.28);outline-offset:2px}
+  #completeness-content .completion-ok{color:#0F766E;font-weight:900}
+  html.theme-dark #completeness-content .completion-actions .text-action{border-color:#98516F;color:#FFD5E7!important;background:#421A3A!important}
+  html.theme-dark #completeness-content .completion-actions .text-action.pbd{border-color:#317F7A;color:#B7FFF7!important;background:#123F42!important}
+  html.theme-dark #completeness-content .completion-ok{color:#8EE7DF}
+  #completeness-content .completion-mobile{display:none}
+
+  /* Shared table guardrails: clear headers, stable wrapping and keyboard focus. */
+  #app main .table-shell{max-width:100%;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+  #app main .upgrade-table :is(th,td){line-height:1.35;overflow-wrap:anywhere}
+  #app main .upgrade-table button:focus-visible{outline:3px solid rgba(188,30,224,.28);outline-offset:2px}
+}
+
+@media screen and (max-width:760px){
+  #completeness-content .completion-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html body #app main #completeness-content .completeness-table{display:none!important}
+  #completeness-content .completion-mobile{display:grid;gap:12px;padding:12px}
+  #completeness-content .completion-mobile article{padding:15px;border:1px solid #D6E4EF;border-radius:15px;background:#FFFFFF;box-shadow:0 6px 16px rgba(28,45,86,.05)}
+  html.theme-dark #completeness-content .completion-mobile article{border-color:#334E72;background:#101A42}
+  #completeness-content .completion-mobile header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  #completeness-content .completion-mobile header b{display:block;color:#163D7A;font-size:13px}
+  #completeness-content .completion-mobile header small{display:block;margin-top:3px;color:#64748B;font-size:10px}
+  html.theme-dark #completeness-content .completion-mobile header b{color:#F8FAFF}
+  html.theme-dark #completeness-content .completion-mobile header small{color:#B9CCE5}
+  #completeness-content .needs-action,#completeness-content .is-complete{flex:none;padding:5px 8px;border-radius:99px;font-size:9px;font-weight:900}
+  #completeness-content .needs-action{color:#8C2453;background:#FFE8F1}
+  #completeness-content .is-complete{color:#0F766E;background:#DDF8F3}
+  #completeness-content .mobile-progress{margin-top:12px}
+  #completeness-content .mobile-progress label{display:flex;justify-content:space-between;color:#526176;font-size:10px;font-weight:800}
+  #completeness-content .mobile-progress>i{display:block;height:8px;margin-top:5px;overflow:hidden;border-radius:99px;background:#E7EAF4}
+  #completeness-content .mobile-progress>i>em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#FF8DB8,#B79CFF)}
+  #completeness-content .mobile-progress.pbd>i>em{background:linear-gradient(90deg,#78D9D2,#80BDF3)}
+  #completeness-content .completion-mobile article>p{margin:11px 0;color:#64748B;font-size:10px}
+  html.theme-dark body #app main #completeness-content .completion-mobile article :is(header b,.mobile-progress label span,.mobile-progress label b){color:#F8FAFF!important}
+  html.theme-dark body #app main #completeness-content .completion-mobile article :is(header small,article>p){color:#B9CCE5!important}
+  html.theme-dark body #app main #completeness-content .completion-actions .text-action{color:#FFD5E7!important;background:#421A3A!important;border-color:#98516F!important}
+  html.theme-dark body #app main #completeness-content .completion-actions .text-action.pbd{color:#B7FFF7!important;background:#123F42!important;border-color:#317F7A!important}
+}
+
+@media screen and (max-width:380px){
+  #completeness-content .completion-summary{grid-template-columns:1fr}
+}
+
 /* ================================================================
    v73 — adaptive phone/tablet data entry and safe-area header
    ================================================================ */

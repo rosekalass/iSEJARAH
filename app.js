@@ -611,8 +611,6 @@
             name: u.name || 'Pengguna',
             email: u.email || '',
             staffId: u.staffId || '',
-            photoDataUrl: typeof u.photoDataUrl === 'string' ? u.photoDataUrl : '',
-            gender: ['L','P'].includes(u.gender) ? u.gender : '',
             role: (u.role === 'KETUA_PANITIA' ? 'ADMIN' : (u.role || 'GURU_SEJARAH')),
             active: u.active !== false,
             updatedAt: u.updatedAt || new Date().toISOString().split('T')[0]
@@ -699,6 +697,8 @@
     // Keep just-entered marks protected while their network write is pending.
     let phase10ScoreWriteSeq = 0;
     const phase10PendingScoreWrites = new Map();
+    let phase10PbdWriteSeq = 0;
+    const phase10PendingPbdWrites = new Map();
     let phase10RemoteLoadSeq = 0;
 
     function phase10MergePendingScores(remoteScores=[]) {
@@ -729,6 +729,49 @@
         if(ok&&current?.version===version){
             phase10PendingScoreWrites.delete(String(scoreRec.id));
         }
+        return ok;
+    }
+
+    function phase10MergePendingPbdRecords(remoteRecords=[]){
+        const merged=new Map(
+            (Array.isArray(remoteRecords)?remoteRecords:[])
+                .filter(Boolean)
+                .map(record=>[String(record.id),record])
+        );
+
+        phase10PendingPbdWrites.forEach(entry=>{
+            if(entry?.deleted)merged.delete(String(entry.id));
+            else if(entry?.record?.id)merged.set(String(entry.record.id),{...entry.record});
+        });
+
+        return [...merged.values()];
+    }
+
+    async function phase10SavePbdRecordRemote(record){
+        if(!record?.id)return false;
+        if(phase10Mode!=='SUPABASE')return true;
+
+        const version=++phase10PbdWriteSeq;
+        const snapshot=JSON.parse(JSON.stringify(record));
+        const key=String(record.id);
+        phase10PendingPbdWrites.set(key,{version,id:key,record:snapshot,deleted:false});
+
+        const ok=await phase10Upsert('pbdRecords',key,snapshot);
+        const current=phase10PendingPbdWrites.get(key);
+        if(ok&&current?.version===version)phase10PendingPbdWrites.delete(key);
+        return ok;
+    }
+
+    async function phase10DeletePbdRecordRemote(id){
+        if(!id)return false;
+        if(phase10Mode!=='SUPABASE')return true;
+
+        const key=String(id);
+        const version=++phase10PbdWriteSeq;
+        phase10PendingPbdWrites.set(key,{version,id:key,record:null,deleted:true});
+        const ok=await phase10Delete('pbdRecords',key);
+        const current=phase10PendingPbdWrites.get(key);
+        if(ok&&current?.version===version)phase10PendingPbdWrites.delete(key);
         return ok;
     }
 
@@ -3434,7 +3477,13 @@
     }
 
     function getPbdRecord(studentId, dskpId, period) {
-        return appState.pbdRecords.find(r => r.studentId === studentId && r.dskpId === dskpId && r.assessmentPeriod === period);
+        const academicYear=pbdResolveAcademicYear();
+        return appState.pbdRecords.find(r =>
+            r.studentId === studentId &&
+            r.dskpId === dskpId &&
+            r.assessmentPeriod === period &&
+            String(r.academicYear||academicYear) === academicYear
+        );
     }
 
     function getOverallTpRecord(studentId, period) {
@@ -3585,7 +3634,7 @@
         if (rec) return rec;
         const now = new Date().toISOString();
         rec = {
-            id: `pbd_${studentId}_${dskpId}_${period}`,
+            id: pbdRecordId(studentId,dskpId,period),
             studentId,
             dskpId,
             schoolId: 'MATTARY',
@@ -3619,7 +3668,7 @@
         return true;
     }
 
-    function setPbdTp(studentId, tp) {
+    async function setPbdTp(studentId, tp) {
         if (![1,2,3,4,5,6].includes(Number(tp)) || !assertPbdWritable()) return;
         const rec = ensurePbdRecord(studentId);
         const previousTP = rec.tp;
@@ -3632,7 +3681,9 @@
         });
         showPbdSaveState('Sedang menyimpan...', 'saving');
         persistPhase4State();
-        setTimeout(() => showPbdSaveState('✓ Disimpan', 'saved'), 250);
+        phase10RemoteLoadSeq++;
+        const saved=await phase10SavePbdRecordRemote(rec);
+        showPbdSaveState(saved?'✓ Disimpan':'Gagal menyimpan',saved?'saved':'error');
         renderPbdRows();
         updatePbdStats();
         updateDashboardKPIs();
@@ -3641,13 +3692,15 @@
     function updatePbdField(studentId, field, value, debounce = false) {
         if (!assertPbdWritable()) return;
         const rec = ensurePbdRecord(studentId);
-        const commit = () => {
+        const commit = async () => {
             rec[field] = value;
             rec.updatedAt = new Date().toISOString();
             rec.updatedBy = currentUserId;
             logAudit('UPDATE_PBD', { pbdRecordId: rec.id, studentId, field });
             persistPhase4State();
-            showPbdSaveState('✓ Disimpan', 'saved');
+            phase10RemoteLoadSeq++;
+            const saved=await phase10SavePbdRecordRemote(rec);
+            showPbdSaveState(saved?'✓ Disimpan':'Gagal menyimpan',saved?'saved':'error');
         };
         showPbdSaveState('Sedang menyimpan...', 'saving');
         if (debounce) {
@@ -3706,16 +3759,21 @@
         if (!selectedPbdStudents.size || !assertPbdWritable()) return;
         const { dskpId, period } = getCurrentPbdContext();
         const existing = [...selectedPbdStudents].filter(id => getPbdRecord(id, dskpId, period)?.tp).length;
-        const proceed = () => {
-            [...selectedPbdStudents].forEach(studentId => {
+        const proceed = async () => {
+            const records=[...selectedPbdStudents].map(studentId => {
                 const rec = ensurePbdRecord(studentId);
                 rec.tp = Number(tp);
                 rec.updatedAt = new Date().toISOString();
                 rec.updatedBy = currentUserId;
+                return rec;
             });
             logAudit('BULK_UPDATE_PBD', { count: selectedPbdStudents.size, tp: Number(tp), dskpId, period });
             persistPhase4State();
-            showPbdSaveState('✓ Disimpan', 'saved');
+            phase10RemoteLoadSeq++;
+            showPbdSaveState('Sedang menyimpan...', 'saving');
+            const results=await Promise.all(records.map(phase10SavePbdRecordRemote));
+            const saved=results.every(Boolean);
+            showPbdSaveState(saved?'✓ Disimpan':'Gagal menyimpan',saved?'saved':'error');
             selectedPbdStudents.clear();
             renderPbdRows();
             updatePbdStats();
@@ -5032,7 +5090,10 @@
             appState.students=students;
             appState.assessments=assessments;
             appState.scores=phase10MergePendingScores(scores);
-            appState.pbdRecords=pbdRecords;
+            // Keep unsent local TP values authoritative while a background
+            // load is running. Without this merge, a slower remote snapshot
+            // can make a newly entered TP appear to disappear.
+            appState.pbdRecords=phase10MergePendingPbdRecords(pbdRecords);
             appState.pbdGroupLevels=pbdGroupLevels;
             appState.pbdOverall=pbdOverall;
             appState.pbdLocks=pbdLocks;
@@ -5211,7 +5272,7 @@
         // a full state reload that can overwrite an in-flight local value.
         const tables=[
             'classes','students','assessments',
-            'pbdRecords','pbdGroupLevels','pbdOverall','pbdLocks',
+            'pbdGroupLevels','pbdOverall','pbdLocks',
             'interventions','users','settings','headcount'
         ];
 
@@ -5244,6 +5305,37 @@
 
                 persistMarksState();
                 phase10SetStatus('SUPABASE','Live sync: scores');
+                phase10ScheduleUiRefresh();
+            }
+        );
+
+        // Merge PBD changes record-by-record instead of reloading the whole
+        // state after every TP selection. Pending local edits are protected.
+        channel=channel.on(
+            'postgres_changes',
+            {
+                event:'*',
+                schema:'public',
+                table:phase10Collection('pbdRecords')
+            },
+            payload=>{
+                const eventType=String(payload?.eventType||'').toUpperCase();
+                const id=String(payload?.new?.id||payload?.old?.id||'');
+                if(!id||phase10PendingPbdWrites.has(id))return;
+
+                if(eventType==='DELETE'){
+                    appState.pbdRecords=appState.pbdRecords.filter(r=>String(r.id)!==id);
+                }else{
+                    const incoming=phase10DocData(payload.new);
+                    if(incoming){
+                        const idx=appState.pbdRecords.findIndex(r=>String(r.id)===id);
+                        if(idx>=0)appState.pbdRecords[idx]=incoming;
+                        else appState.pbdRecords.push(incoming);
+                    }
+                }
+
+                persistPhase4State();
+                phase10SetStatus('SUPABASE','Live sync: PBD');
                 phase10ScheduleUiRefresh();
             }
         );
@@ -5656,7 +5748,7 @@
     let selectedLoginRole = 'ADMIN';
 
     const ROLE_ALLOWED_VIEWS = {
-        ADMIN: ['dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings'],
+        ADMIN: ['dashboard', 'teacher-dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings'],
         GURU_SEJARAH: ['teacher-dashboard', 'completeness', 'attention', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'intervention']
     };
 
@@ -5747,25 +5839,6 @@
         }) || null;
     }
 
-    function validUserPhotoDataUrl(value) {
-        return typeof value === 'string' && /^data:image\/(?:jpeg|png);base64,/i.test(value);
-    }
-
-    function updateTopbarUserPhoto(profile) {
-        const image=document.getElementById('user-avatar-photo');
-        const initial=document.getElementById('user-avatar-initial');
-        const photo=validUserPhotoDataUrl(profile?.photoDataUrl)?profile.photoDataUrl:'';
-        if(initial){
-            initial.textContent=(profile?.name||'U').trim().charAt(0).toUpperCase();
-            initial.classList.toggle('hidden',Boolean(photo));
-        }
-        if(image){
-            image.classList.toggle('hidden',!photo);
-            if(photo)image.src=photo;
-            else image.removeAttribute('src');
-        }
-    }
-
     function setSessionUser(profile) {
         currentUserId = profile.id;
         currentUserRole = profile.role === 'KETUA_PANITIA' ? 'ADMIN' : profile.role;
@@ -5792,8 +5865,7 @@
             const displayLoginId = profile.loginId || profile.mykad || profile.myKad || profile.staffId || (isAdminSession() ? 'ADMIN' : profile.email) || '—';
             userEmail.textContent = displayLoginId;
         }
-        updateTopbarUserPhoto(profile);
-        if(typeof window.refreshWorkspaceGreeting==='function')window.refreshWorkspaceGreeting(profile,true);
+        if (userAvatar) userAvatar.textContent = (profile.name || 'U').trim().charAt(0).toUpperCase();
     }
 
     function applyRoleAccessUI(skipDataInit=false) {
@@ -5807,7 +5879,6 @@
 
         if (isAdminSession()) {
             allNav.forEach(el => el.classList.remove('hidden'));
-            document.getElementById('nav-teacher-dashboard')?.classList.add('hidden');
             ['nav-group-main','nav-group-data','nav-group-assessment','nav-group-analytics','nav-group-admin'].forEach(id => document.getElementById(id)?.classList.remove('hidden'));
             if(adminGroupLabel)adminGroupLabel.textContent='Laporan & Pentadbiran';
         } else {
@@ -5857,6 +5928,11 @@
             getActiveAcademicYear?.() ||
             '2026'
         );
+    }
+
+    function pbdRecordId(studentId,dskpId,period,academicYear=null){
+        const safePart=value=>String(value??'').trim().replace(/[^A-Za-z0-9_-]/g,'_');
+        return `pbd_${safePart(pbdResolveAcademicYear(academicYear))}_${safePart(studentId)}_${safePart(dskpId)}_${safePart(period)}`;
     }
 
     // Exact record = only the selected assessment period.
@@ -6069,7 +6145,7 @@
             const calc=calculateStudentThemeAverage(studentId,group,year,period,academicYear);
             const idx=appState.pbdGroupLevels.findIndex(r=>r.studentId===studentId&&r.groupKey===group.key&&r.assessmentPeriod===period&&String(r.academicYear)===String(academicYear));
             if(calc.hasValues){
-                const payload={id:idx>=0?appState.pbdGroupLevels[idx].id:`pbdgrp_${studentId}_${group.key}_${period}`,studentId,groupKey:group.key,groupName:group.name,classId,academicYear,assessmentPeriod:period,tp:calc.avg,averageTP:calc.avg,calculated:true,calculationMode:'AUTO_SK_AVERAGE',teacherId:currentUserId,updatedAt:new Date().toISOString()};
+                const payload={id:idx>=0?appState.pbdGroupLevels[idx].id:`pbdgrp_${academicYear}_${studentId}_${group.key}_${period}`,studentId,groupKey:group.key,groupName:group.name,classId,academicYear,assessmentPeriod:period,tp:calc.avg,averageTP:calc.avg,calculated:true,calculationMode:'AUTO_SK_AVERAGE',teacherId:currentUserId,updatedAt:new Date().toISOString()};
                 if(idx>=0)appState.pbdGroupLevels[idx]={...appState.pbdGroupLevels[idx],...payload};else appState.pbdGroupLevels.push(payload);
             } else if(idx>=0) appState.pbdGroupLevels.splice(idx,1);
         });
@@ -6513,7 +6589,7 @@
         showPbdSaveState('Sedang menyimpan...','saving');
 
         const writes=[
-            ...records.map(r=>phase10Upsert('pbdRecords',r.id,r)),
+            ...records.map(r=>phase10SavePbdRecordRemote(r)),
             ...groups.map(r=>phase10Upsert('pbdGroupLevels',r.id,r)),
             ...overall.map(r=>phase10Upsert('pbdOverall',r.id,r))
         ];
@@ -6560,7 +6636,7 @@
                 appState.pbdRecords=appState.pbdRecords.filter(r=>!recordIds.has(r.id));
                 appState.pbdGroupLevels=(appState.pbdGroupLevels||[]).filter(r=>!groupIds.has(r.id));
                 appState.pbdOverall=(appState.pbdOverall||[]).filter(r=>!overallIds.has(r.id));
-                records.forEach(r=>phase10Delete('pbdRecords',r.id));
+                records.forEach(r=>phase10DeletePbdRecordRemote(r.id));
                 groups.forEach(r=>phase10Delete('pbdGroupLevels',r.id));
                 overall.forEach(r=>phase10Delete('pbdOverall',r.id));
                 persistPhase4State();
@@ -6582,7 +6658,7 @@
         const tp=rawValue===''?null:Number(rawValue);if(tp!==null&&![1,2,3,4,5,6].includes(tp))return;
         const period=getPbdMatrixPeriod(),classId=document.getElementById('pbd-class')?.value||'',year=Number(document.getElementById('pbd-year')?.value||4),academicYear=document.getElementById('filter-academic-year')?.value||'2026';
         let rec=getPbdMatrixRecord(studentId,dskpId,period);
-        if(!rec){rec={id:`pbd_${studentId}_${dskpId}_${period}`,studentId,dskpId,classId,schoolId:'MATTARY',academicYear,teacherId:currentUserId,assessmentPeriod:period,tp:null,assessmentDate:new Date().toISOString().slice(0,10),evidence:'',teacherNote:'',yearLevel:year,createdAt:new Date().toISOString(),createdBy:currentUserId};appState.pbdRecords.push(rec);}
+        if(!rec){rec={id:pbdRecordId(studentId,dskpId,period,academicYear),studentId,dskpId,classId,schoolId:'MATTARY',academicYear,teacherId:currentUserId,assessmentPeriod:period,tp:null,assessmentDate:new Date().toISOString().slice(0,10),evidence:'',teacherNote:'',yearLevel:year,createdAt:new Date().toISOString(),createdBy:currentUserId};appState.pbdRecords.push(rec);}
         rec.tp=tp;rec.updatedAt=new Date().toISOString();rec.updatedBy=currentUserId;
         if(tp===null)appState.pbdRecords=appState.pbdRecords.filter(r=>r!==rec);
         syncPbdDerivedLevelsForStudent(studentId,false);
@@ -6596,11 +6672,11 @@
         if(phase10Mode==='SUPABASE'){
             const writes=[];
             writes.push(tp===null
-                ? phase10Delete('pbdRecords',rec.id)
-                : phase10Upsert('pbdRecords',rec.id,rec));
+                ? phase10DeletePbdRecordRemote(rec.id)
+                : phase10SavePbdRecordRemote(rec));
 
             (appState.pbdGroupLevels||[])
-                .filter(r=>r.studentId===studentId&&r.assessmentPeriod===period)
+                .filter(r=>r.studentId===studentId&&r.assessmentPeriod===period&&String(r.academicYear)===String(academicYear))
                 .forEach(r=>writes.push(phase10Upsert(
                     'pbdGroupLevels',
                     r.id||`${r.studentId}_${r.groupKey}_${r.academicYear}_${r.assessmentPeriod}`,
@@ -6608,7 +6684,7 @@
                 )));
 
             (appState.pbdOverall||[])
-                .filter(r=>r.studentId===studentId&&r.assessmentPeriod===period)
+                .filter(r=>r.studentId===studentId&&r.assessmentPeriod===period&&String(r.academicYear)===String(academicYear))
                 .forEach(r=>writes.push(phase10Upsert(
                     'pbdOverall',
                     r.id||`${r.studentId}_${r.academicYear}_${r.assessmentPeriod}`,
@@ -9628,7 +9704,7 @@
         const progressRows=d.pbdProgress.map(x=>{
             const label=x.delta===null?'—':x.delta>0?`↑ +${x.delta}`:x.delta<0?`↓ ${x.delta}`:'→ Kekal';
             const status=x.status==='DINILAI_SEMULA'?'Dinilai semula':x.status==='DIWARISI'?'Diwarisi dari Pertengahan':'Belum dinilai';
-            return `<tr class="border-t border-slate-100"><td class="p-2 font-bold text-indigo-700">${reportSafe(x.dskp.standardLearningCode)}</td><td class="p-2">${reportSafe(x.dskp.standardLearningText)}</td><td class="p-2 text-center font-black">${x.mid?.tp?`TP${x.mid.tp}`:'—'}</td><td class="p-2 text-center font-black">${x.end?.tp?`TP${x.end.tp}`:'—'}</td><td class="p-2 text-center ${x.delta>0?'text-emerald-700':x.delta<0?'text-rose-700':'text-slate-600'}">${label}</td><td class="p-2 report-status-cell"><span class="report-status-chip ${x.status==='DIWARISI'?'inherited':''}">${status}</span></td></tr>`;
+            return `<tr class="border-t border-slate-100"><td class="p-2 font-bold text-indigo-700">${reportSafe(x.dskp.standardLearningCode)}</td><td class="p-2">${reportSafe(x.dskp.standardLearningText)}</td><td class="p-2 text-center font-black">${x.mid?.tp?`TP${x.mid.tp}`:'—'}</td><td class="p-2 text-center font-black">${x.end?.tp?`TP${x.end.tp}`:'—'}</td><td class="p-2 text-center ${x.delta>0?'text-emerald-700':x.delta<0?'text-rose-700':'text-slate-600'}">${label}</td><td class="p-2"><span class="report-status-chip ${x.status==='DIWARISI'?'inherited':''}">${status}</span></td></tr>`;
         }).join('');
         const improved=d.pbdProgress.filter(x=>x.delta>0).length,stable=d.pbdProgress.filter(x=>x.delta===0).length,declined=d.pbdProgress.filter(x=>x.delta<0).length,inherited=d.pbdProgress.filter(x=>x.status==='DIWARISI').length;
         const strengths=d.pbdProgress.filter(x=>Number(x.end?.tp||x.mid?.tp)>=4).slice(0,4);
@@ -9640,12 +9716,12 @@
           <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">${reportKpi('Purata Markah',d.avgMark==null?'—':formatWholePercent(d.avgMark),'Individu')}${reportKpi('Gred Semasa',latest?calculateGrade(latest.score.percentage):'—',latest?.assessment.name||'Tiada pentaksiran')}${reportKpi('TP Pertengahan → Akhir',`${d.midOverall?.overallTP?'TP'+d.midOverall.overallTP:'—'} → ${d.endOverall?.overallTP?'TP'+d.endOverall.overallTP:'—'}`)}${reportKpi('Sasaran ETR',hc?.etr==null?'—':formatWholePercent(hc.etr),targetGap==null?'Tiada jurang':targetGap<=0?'Sasaran dicapai':`Perlu +${targetGap.toFixed(1)} mata`)}${reportKpi('Status Perhatian',priority,d.nearMiss?.nearMiss?`Near Miss ${d.nearMiss.targetGrade}: +${d.nearMiss.gap}`:'Berdasarkan semua indikator')}${reportKpi('Kelengkapan Data',formatWholePercent(d.completion),`${d.pbdRecorded.length}/${d.dskp.length} SP PBD`)}</div>
           <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">${reportDistributionHtml('Trend Markah (%)',markTrend,100)}<div class="rounded-xl border border-slate-200 p-4"><h3 class="text-xs font-black text-slate-800 mb-3">Ringkasan Progression</h3><div class="space-y-2 text-[10px]"><p><b>Perubahan keseluruhan:</b> ${totalChange===null?'—':`${totalChange>0?'↑ +':totalChange<0?'↓ ':'→ '}${totalChange.toFixed(1)} mata peratus`}</p><p><b>Perbandingan kelas:</b> ${d.avgMark==null||d.classAverage==null?'—':`${formatWholePercent(d.avgMark)} berbanding ${formatWholePercent(d.classAverage)} (${reportSafe(d.classBand)})`}</p><p><b>Near Miss:</b> ${d.nearMiss?.nearMiss?`Gred ${d.nearMiss.currentGrade} → ${d.nearMiss.targetGrade}, perlu +${d.nearMiss.gap} mata`:'Tiada Near Miss pada pencapaian terkini'}</p><p><b>Status sasaran:</b> ${reportSafe(hc?.status||'Belum Direkod')}</p></div></div></div>
           <div class="mt-5"><h3 class="text-xs font-black text-slate-800 mb-2">Perbandingan Markah dan Sasaran</h3><div class="report-table-frame rounded-xl border border-slate-200"><table class="report-data-table report-mark-comparison w-full text-[9px]"><colgroup><col style="width:29%"><col style="width:11%"><col style="width:11%"><col style="width:8%"><col style="width:13%"><col style="width:10%"><col style="width:18%"></colgroup><thead class="bg-slate-50"><tr><th class="p-2 text-left">Pentaksiran</th><th class="p-2">Markah</th><th class="p-2">Peratus</th><th class="p-2">Gred</th><th class="p-2">Perubahan</th><th class="p-2">Sasaran</th><th class="p-2 text-left">Catatan</th></tr></thead><tbody>${markRows||`<tr><td colspan="7" class="p-4 text-center text-slate-400">Tiada markah direkodkan.</td></tr>`}</tbody></table></div></div>
-          <div class="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4"><p class="text-[10px] font-black uppercase text-blue-700">Perjalanan Headcount</p><div class="report-headcount-grid mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-[9px]">${[['TOV',hc?.toy?.value],['OT1',hc?.oti1],['UPSA/AR1',hc?.ar1?.value],['OT2',hc?.oti2],['UASA/AR2',hc?.ar2?.value],['ETR',hc?.etr]].map(([l,v])=>`<div class="rounded-lg bg-white border border-blue-100 p-2"><b>${l}</b><p class="font-black mt-1">${v==null?'—':formatWholePercent(v)}</p></div>`).join('')}</div></div>
+          <div class="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4"><p class="text-[10px] font-black uppercase text-blue-700">Perjalanan Headcount</p><div class="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-[9px]">${[['TOV',hc?.toy?.value],['OT1',hc?.oti1],['UPSA/AR1',hc?.ar1?.value],['OT2',hc?.oti2],['UASA/AR2',hc?.ar2?.value],['ETR',hc?.etr]].map(([l,v])=>`<div class="rounded-lg bg-white border border-blue-100 p-2"><b>${l}</b><p class="font-black mt-1">${v==null?'—':formatWholePercent(v)}</p></div>`).join('')}</div></div>
 
           <div class="report-page-break"></div>${reportHeaderHtml('Progression PBD dan Standard Pembelajaran', `${d.student.name} · Sesi ${academicYear}`)}
           <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">${reportKpi('Meningkat',improved,'SP')}${reportKpi('Kekal',stable,'SP')}${reportKpi('Menurun',declined,'SP')}${reportKpi('Data Diwarisi',inherited,'Belum dinilai semula')}</div>
           <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">${reportDistributionHtml('Taburan PBD — '+periodName,tpDist)}<div class="rounded-xl border border-slate-200 p-4"><h3 class="text-xs font-black text-slate-800 mb-2">Kekuatan dan Jurang</h3><p class="text-[10px] font-bold text-emerald-700">Kekuatan</p><ul class="text-[9px] text-slate-600 list-disc ml-4">${strengths.length?strengths.map(x=>`<li>${reportSafe(x.dskp.standardLearningCode)} · ${reportSafe(x.dskp.standardLearningText)}</li>`).join(''):'<li>Belum ada SP pada TP4–TP6.</li>'}</ul><p class="text-[10px] font-bold text-rose-700 mt-3">Perlu Diperkukuh</p><ul class="text-[9px] text-slate-600 list-disc ml-4">${gaps.length?gaps.map(x=>`<li>${reportSafe(x.dskp.standardLearningCode)} · ${reportSafe(x.dskp.standardLearningText)}</li>`).join(''):'<li>Tiada SP direkodkan di bawah TP3.</li>'}</ul></div></div>
-          <div class="mt-5"><h3 class="text-xs font-black text-slate-800 mb-2">Pertengahan → Akhir Tahun</h3><div class="report-table-frame rounded-xl border border-slate-200"><table class="report-data-table w-full text-[8px]"><colgroup><col style="width:9%"><col style="width:39%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:20%"></colgroup><thead class="bg-slate-50"><tr><th class="p-2 text-left">SP</th><th class="p-2 text-left">Standard Pembelajaran</th><th class="p-2">Pertengahan</th><th class="p-2">Akhir</th><th class="p-2">Progress</th><th class="p-2 report-status-cell">Status Data</th></tr></thead><tbody>${progressRows||`<tr><td colspan="6" class="p-4 text-center text-slate-400">Tiada data PBD.</td></tr>`}</tbody></table></div></div>
+          <div class="mt-5"><h3 class="text-xs font-black text-slate-800 mb-2">Pertengahan → Akhir Tahun</h3><div class="report-table-frame rounded-xl border border-slate-200"><table class="report-data-table w-full text-[8px]"><colgroup><col style="width:9%"><col style="width:39%"><col style="width:10%"><col style="width:10%"><col style="width:12%"><col style="width:20%"></colgroup><thead class="bg-slate-50"><tr><th class="p-2 text-left">SP</th><th class="p-2 text-left">Standard Pembelajaran</th><th class="p-2">Pertengahan</th><th class="p-2">Akhir</th><th class="p-2">Progress</th><th class="p-2 text-left">Status Data</th></tr></thead><tbody>${progressRows||`<tr><td colspan="6" class="p-4 text-center text-slate-400">Tiada data PBD.</td></tr>`}</tbody></table></div></div>
 
           <div class="report-page-break"></div>${reportHeaderHtml('Intervensi dan Pelan Tindakan', `${d.student.name} · ${d.cls?.name||''}`)}
           <div class="mt-5 rounded-xl border ${d.attention?.priority?'border-amber-200 bg-amber-50':'border-emerald-200 bg-emerald-50'} p-4"><p class="text-[10px] font-black uppercase">Rumusan Prestasi</p><p class="text-xs font-bold mt-1">${reportSafe(priority)}</p><div class="mt-2 text-[10px] space-y-1">${(d.attention?.reasons||[]).length?d.attention.reasons.map(r=>`<p>• ${reportSafe(r)}</p>`).join(''):'<p>Tiada indikator risiko kritikal berdasarkan markah dan PBD semasa.</p>'}</div></div>
@@ -9821,16 +9897,6 @@
                 const bounds=target.getBoundingClientRect();
                 const contentBottom=Math.max(...[...target.children].filter(el=>!el.classList.contains('report-sheet-number')).map(el=>el.getBoundingClientRect().bottom));
                 if(contentBottom>bounds.top+1070)throw new Error('Kandungan melebihi halaman A4. Gunakan Cetak untuk pemisahan halaman automatik.');
-                // Compensate for the raster renderer's low Arial baseline inside compact cells.
-                // Only the capture copy changes; normal preview and browser print stay untouched.
-                target.querySelectorAll('.report-headcount-grid b,.report-headcount-grid p,.report-status-chip,td.text-center').forEach(cell=>{
-                    if(cell.children.length)return;
-                    const text=document.createElement('span');
-                    text.textContent=cell.textContent;
-                    text.style.setProperty('display','block','important');
-                    text.style.setProperty('transform','translateY(-0.2em)','important');
-                    cell.replaceChildren(text);
-                });
                 const canvas=await html2canvas(target,{scale:2,useCORS:true,allowTaint:false,backgroundColor:'#fff',logging:false,scrollX:0,scrollY:0,windowWidth:794,windowHeight:1123,width:794,height:1123});
                 canvases.push(canvas);
             } finally { captureRoot.remove(); }
@@ -10351,75 +10417,6 @@
     // ==============================================================
     // ENHANCED USER MANAGEMENT
     // ==============================================================
-    const USER_PHOTO_MAX_BYTES=1024*1024;
-    let pendingUserPhotoDataUrl='';
-
-    function renderUserPhotoPreview(name='') {
-        const image=document.getElementById('form-user-photo-image');
-        const initial=document.getElementById('form-user-photo-initial');
-        const photo=validUserPhotoDataUrl(pendingUserPhotoDataUrl)?pendingUserPhotoDataUrl:'';
-        if(initial){
-            initial.textContent=(name||document.getElementById('form-user-name')?.value||'G').trim().charAt(0).toUpperCase();
-            initial.classList.toggle('hidden',Boolean(photo));
-        }
-        if(image){
-            image.classList.toggle('hidden',!photo);
-            if(photo)image.src=photo;
-            else image.removeAttribute('src');
-        }
-    }
-
-    function handleUserPhotoUpload(event) {
-        const input=event?.target;
-        const file=input?.files?.[0];
-        if(!file)return;
-        const allowed=new Set(['image/jpeg','image/png']);
-        if(!allowed.has(file.type)){
-            input.value='';
-            showAlert('Format Tidak Disokong','Pilih gambar dalam format JPG atau PNG sahaja.','info');
-            return;
-        }
-        if(file.size>USER_PHOTO_MAX_BYTES){
-            input.value='';
-            showAlert('Fail Terlalu Besar','Saiz gambar profil mesti tidak melebihi 1 MB.','info');
-            return;
-        }
-
-        const reader=new FileReader();
-        reader.onerror=()=>{
-            input.value='';
-            showAlert('Gambar Tidak Dapat Dibaca','Sila pilih fail JPG atau PNG yang sah.','danger');
-        };
-        reader.onload=()=>{
-            const source=new Image();
-            source.onerror=()=>{
-                input.value='';
-                showAlert('Gambar Tidak Sah','Fail yang dipilih tidak dapat diproses sebagai gambar.','danger');
-            };
-            source.onload=()=>{
-                const size=Math.min(source.naturalWidth,source.naturalHeight);
-                const sx=Math.max(0,(source.naturalWidth-size)/2);
-                const sy=Math.max(0,(source.naturalHeight-size)/2);
-                const canvas=document.createElement('canvas');
-                canvas.width=480;canvas.height=480;
-                const context=canvas.getContext('2d');
-                context.fillStyle='#ffffff';context.fillRect(0,0,480,480);
-                context.drawImage(source,sx,sy,size,size,0,0,480,480);
-                pendingUserPhotoDataUrl=canvas.toDataURL('image/jpeg',0.86);
-                renderUserPhotoPreview();
-            };
-            source.src=String(reader.result||'');
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function removeUserPhoto() {
-        pendingUserPhotoDataUrl='';
-        const input=document.getElementById('form-user-photo-input');
-        if(input)input.value='';
-        renderUserPhotoPreview();
-    }
-
     function userRoleLabel(role) {
         return (role === 'ADMIN' || role === 'KETUA_PANITIA') ? 'Admin (KP Sejarah)' : 'Guru Sejarah';
     }
@@ -10486,7 +10483,6 @@
                     : '<span class="users-empty-class">Tiada kelas</span>';
 
                 const initial=(u.name||'U').trim().charAt(0).toUpperCase();
-                const photo=validUserPhotoDataUrl(u.photoDataUrl)?u.photoDataUrl:'';
                 const isSelf=u.id===currentUserId;
                 const canEdit=currentUserRole==='ADMIN';
                 const normalizedRole=u.role==='KETUA_PANITIA'?'ADMIN':u.role;
@@ -10497,7 +10493,7 @@
                 return `<tr class="users-row ${u.active===false?'users-row-inactive':''}">
                     <td class="px-5 py-4">
                         <div class="users-person">
-                            <div class="users-avatar ${photo?'has-photo':''}">${photo?`<img class="users-avatar-photo" src="${escapeHtml(photo)}" alt="Gambar profil ${escapeHtml(u.name||'pengguna')}">`:escapeHtml(initial)}</div>
+                            <div class="users-avatar">${escapeHtml(initial)}</div>
                             <div class="min-w-0">
                                 <p class="users-name">${escapeHtml(u.name||'Tanpa Nama')}</p>
                                 <p class="users-id">${escapeHtml(loginId)}${isSelf?' · Anda':''}</p>
@@ -10546,18 +10542,13 @@
         document.getElementById('form-user-staff-id').value=u?.staffId||'';
         document.getElementById('form-user-role').value=u?.role||'GURU_SEJARAH';
         document.getElementById('form-user-status').value=u?.active===false?'INACTIVE':'ACTIVE';
-        document.getElementById('form-user-gender').value=['L','P'].includes(u?.gender)?u.gender:'';
-        pendingUserPhotoDataUrl=validUserPhotoDataUrl(u?.photoDataUrl)?u.photoDataUrl:'';
-        const photoInput=document.getElementById('form-user-photo-input');
-        if(photoInput)photoInput.value='';
-        renderUserPhotoPreview(u?.name||'');
         document.getElementById('modal-user-title').textContent=u?'Kemaskini Pengguna':'Tambah Pengguna';
         renderUserAssignmentOptions(u?.id||'');
         const modal=document.getElementById('modal-user');modal.classList.remove('hidden');modal.classList.add('flex');lucide.createIcons();
     }
 
     function editUser(id){openUserModal(id);}
-    function closeUserModal(){const m=document.getElementById('modal-user');m.classList.add('hidden');m.classList.remove('flex');pendingUserPhotoDataUrl='';const input=document.getElementById('form-user-photo-input');if(input)input.value='';}
+    function closeUserModal(){const m=document.getElementById('modal-user');m.classList.add('hidden');m.classList.remove('flex');}
 
     function renderUserAssignmentOptions(userIdOverride='') {
         const list=document.getElementById('user-class-assignment-list'); if(!list)return;
@@ -10629,8 +10620,6 @@
             name,
             email:existing?.email||'',
             staffId:role==='GURU_SEJARAH'?loginId:'',
-            photoDataUrl:validUserPhotoDataUrl(pendingUserPhotoDataUrl)?pendingUserPhotoDataUrl:'',
-            gender: document.getElementById('form-user-gender').value,
             loginId,
             mykad:role==='GURU_SEJARAH'?loginId:'',
             role,
@@ -10648,8 +10637,6 @@
         });
 
         persistUsersState();
-
-        if(userId===currentUserId){updateTopbarUserPhoto(userData);if(typeof window.refreshWorkspaceGreeting==='function')window.refreshWorkspaceGreeting(userData);}
 
         if(phase10Mode==='SUPABASE'&&userData.loginId){
             const remoteUser={...userData,legacyId:userId};
