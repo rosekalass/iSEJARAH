@@ -45,9 +45,10 @@
     const students = classStudents(cls.id);
     const studentIds = new Set(students.map(s => s.id));
     const assessments = (appState.assessments || []).filter(a => assessmentYear(a) === ay() && (!a.classId || a.classId === cls.id));
-    const scores = actualScores().filter(s => studentIds.has(s.studentId) && assessments.some(a => a.id === s.assessmentId));
+    const assessmentIds = new Set(assessments.map(a=>a.id));
+    const scores = [...new Map(actualScores().filter(s => studentIds.has(s.studentId) && assessmentIds.has(s.assessmentId)).map(s=>[`${s.studentId}|${s.assessmentId}`,s])).values()];
     const expectedMarks = students.length * assessments.length;
-    const pbd = (appState.pbdRecords || []).filter(r => studentIds.has(r.studentId) && String(r.academicYear || ay()) === ay());
+    const pbd = [...new Map((appState.pbdRecords || []).filter(r => studentIds.has(r.studentId) && String(r.academicYear || ay()) === ay() && Number(r.tp)>=1 && Number(r.tp)<=6).map(r=>[`${r.studentId}|${r.dskpId}|${periodOf(r)}`,r])).values()];
     const dskpCount = Math.max(1, (appState.dskp || []).filter(d => d.active !== false && (!d.yearLevel || Number(d.yearLevel) === Number(cls.year))).length);
     const expectedPbd = students.length * dskpCount * 2;
     return {students:students.length, marks:expectedMarks ? Math.min(100,Math.round(scores.length/expectedMarks*100)) : 0, pbd:expectedPbd ? Math.min(100,Math.round(pbd.length/expectedPbd*100)) : 0, missingMarks:Math.max(0,expectedMarks-scores.length), missingPbd:Math.max(0,expectedPbd-pbd.length)};
@@ -80,7 +81,22 @@
 
   function renderCompleteness() {
     const rows = permittedClasses().map(c => ({c,...completionForClass(c)}));
-    $('completeness-content').innerHTML = `<div class="upgrade-panel table-shell"><table class="upgrade-table"><thead><tr><th>Kelas</th><th>Murid</th><th>Markah Lengkap</th><th>PBD Lengkap</th><th>Belum Lengkap</th><th>Tindakan</th></tr></thead><tbody>${rows.map(x=>`<tr><td><b>${safe(x.c.name)}</b><small>Tahun ${safe(x.c.year)}</small></td><td>${x.students}</td><td><span class="completion-badge ${x.marks===100?'done':''}">${x.marks}%</span></td><td><span class="completion-badge ${x.pbd===100?'done':''}">${x.pbd}%</span></td><td>${x.missingMarks} markah<br>${x.missingPbd} PBD</td><td><button class="text-action" onclick="navigateTab('${x.missingMarks?'marks':'pbd'}')">Lengkapkan →</button></td></tr>`).join('')}</tbody></table></div>`;
+    const totalStudents=rows.reduce((sum,x)=>sum+x.students,0);
+    const completeMarks=rows.filter(x=>x.marks===100).length;
+    const completePbd=rows.filter(x=>x.pbd===100).length;
+    const makeActions=x=>`<div class="completion-actions">${x.missingMarks?`<button class="text-action" onclick="iSejarahV66.openCompletion('marks','${safe(x.c.id)}')">Markah</button>`:''}${x.missingPbd?`<button class="text-action pbd" onclick="iSejarahV66.openCompletion('pbd','${safe(x.c.id)}')">PBD</button>`:''}${!x.missingMarks&&!x.missingPbd?'<span class="completion-ok">✓ Lengkap</span>':''}</div>`;
+    $('completeness-content').innerHTML = `<div class="completion-summary" aria-label="Ringkasan kelengkapan"><article><span>Kelas dipantau</span><b>${rows.length}</b></article><article><span>Jumlah murid</span><b>${totalStudents}</b></article><article><span>Markah lengkap</span><b>${completeMarks}/${rows.length}</b></article><article><span>PBD lengkap</span><b>${completePbd}/${rows.length}</b></article></div><div class="upgrade-panel table-shell completeness-table-shell"><table class="upgrade-table completeness-table"><caption class="sr-only">Status kelengkapan markah dan PBD mengikut kelas</caption><thead><tr><th scope="col">Kelas</th><th scope="col">Murid</th><th scope="col">Markah Lengkap</th><th scope="col">PBD Lengkap</th><th scope="col">Belum Lengkap</th><th scope="col">Tindakan</th></tr></thead><tbody>${rows.map(x=>`<tr><td data-label="Kelas"><b>${safe(x.c.name)}</b><small>Tahun ${safe(x.c.year)}</small></td><td data-label="Murid"><strong class="table-number">${x.students}</strong></td><td data-label="Markah"><div class="completion-cell"><span class="completion-badge ${x.marks===100?'done':''}">${x.marks}%</span><span class="completion-track" aria-hidden="true"><i style="width:${x.marks}%"></i></span></div></td><td data-label="PBD"><div class="completion-cell"><span class="completion-badge ${x.pbd===100?'done':''}">${x.pbd}%</span><span class="completion-track pbd" aria-hidden="true"><i style="width:${x.pbd}%"></i></span></div></td><td data-label="Belum lengkap"><span class="missing-count ${x.missingMarks?'':'zero'}">${x.missingMarks} markah</span><span class="missing-count ${x.missingPbd?'':'zero'}">${x.missingPbd} PBD</span></td><td data-label="Tindakan">${makeActions(x)}</td></tr>`).join('')}</tbody></table><div class="completion-mobile">${rows.map(x=>`<article><header><div><b>${safe(x.c.name)}</b><small>Tahun ${safe(x.c.year)} · ${x.students} murid</small></div>${x.missingMarks||x.missingPbd?'<span class="needs-action">Perlu tindakan</span>':'<span class="is-complete">Lengkap</span>'}</header><div class="mobile-progress"><label><span>Markah</span><b>${x.marks}%</b></label><i><em style="width:${x.marks}%"></em></i></div><div class="mobile-progress pbd"><label><span>PBD</span><b>${x.pbd}%</b></label><i><em style="width:${x.pbd}%"></em></i></div><p>${x.missingMarks} markah · ${x.missingPbd} PBD belum lengkap</p>${makeActions(x)}</article>`).join('')}</div></div>`;
+  }
+
+  function openCompletion(module,classId){
+    navigateTab(module);
+    setTimeout(()=>{
+      const select=$(module==='marks'?'filter-kelas':'pbd-class');
+      if(select&&[...select.options].some(option=>option.value===classId)){
+        select.value=classId;
+        select.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+    },0);
   }
 
   function renderAttention() {
@@ -170,6 +186,6 @@
     if(window.lucide)lucide.createIcons();
   }
 
-  window.iSejarahV66={runRollover,backup,render,printExecutive};
+  window.iSejarahV66={runRollover,backup,render,printExecutive,openCompletion};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
 })();
