@@ -12,8 +12,8 @@
   <meta name="application-name" content="iSEJARAH" />
   <title>Dashboard Pengurusan Markah & PBD Sejarah Sekolah Rendah</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icons/favicon-32x32.png" sizes="32x32" type="image/png" />
-  <link rel="apple-touch-icon" href="icons/ios/apple-touch-icon-180x180.png" sizes="180x180" />
+  <link rel="icon" href="assets/brand-icons-favicon-32x32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/brand-icons-ios-apple-touch-icon-180x180.png" sizes="180x180" />
   <!-- Google Fonts: Plus Jakarta Sans & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -73,12 +73,12 @@
   <script src="config.js"></script>
 
   <script src="tailwind.config.js"></script>
-  <link rel="stylesheet" href="styles.css?v=88.6">
-  <link rel="stylesheet" href="workspace.css?v=86.1">
+  <link rel="stylesheet" href="styles.css?v=88.14">
+  <link rel="stylesheet" href="workspace.css?v=88.13">
   <link rel="stylesheet" href="polish.css?v=86.1">
   <link rel="stylesheet" href="readability.css?v=86.3">
-  <link rel="stylesheet" href="pastel.css?v=88.6">
-  <link rel="stylesheet" href="report-a4.css?v=88.5">
+  <link rel="stylesheet" href="pastel.css?v=88.14">
+  <link rel="stylesheet" href="report-a4.css?v=88.13">
 
   
 
@@ -156,7 +156,7 @@
       content="Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
 
 <meta property="og:image"
-      content="https://isejarah.netlify.app/social/og-image-1200x630.png">
+      content="https://isejarah.netlify.app/assets/brand-social-og-image-1200x630.png">
 
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -168,7 +168,7 @@
 <meta name="twitter:description"
       content="Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
 <meta name="twitter:image"
-      content="https://isejarah.netlify.app/social/x-card-1200x600.png"> 
+      content="https://isejarah.netlify.app/assets/brand-social-x-card-1200x600.png"> 
 
   
 
@@ -198,11 +198,12 @@
 
   
 
-<link rel="icon" href="icons/favicon.ico" sizes="any">
-<link rel="mask-icon" href="icons/monochrome/safari-pinned-tab.svg" color="#173C7A">
+<link rel="icon" href="assets/brand-icons-favicon.ico" sizes="any">
+<link rel="mask-icon" href="assets/brand-icons-monochrome-safari-pinned-tab.svg" color="#173C7A">
 <meta name="msapplication-config" content="browserconfig.xml">
 <meta name="description" content="Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
 <link rel="stylesheet" href="branding.css?v=88.6">
+<link rel="stylesheet" href="teacher-panel.css?v=88.9">
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -215,11 +216,15 @@
     <!-- Responsive Sidebar Navigation -->
     <aside id="sidebar" class="fixed top-0 bottom-0 left-0 z-50 w-72 bg-navy-950 text-slate-300 flex flex-col border-r border-navy-800 transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0">
       <!-- Sidebar Header -->
-      <div class="sidebar-brand-header px-4 flex items-center justify-between border-b border-navy-800 bg-navy-900/50">
-        <div class="sidebar-brand-wordmark-wrap">
-          <img src="branding/logo-horizontal-compact.png" alt="iSEJARAH — Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu" class="sidebar-brand-wordmark">
+      <div class="sidebar-brand-header flex items-center justify-between border-b border-navy-800 bg-navy-900/50">
+        <div class="sidebar-brand-lockup" aria-label="iSEJARAH — Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
+          <img src="assets/brand-branding-app-icon-master-1024.png" alt="" class="sidebar-brand-icon">
+          <div class="sidebar-brand-copy">
+            <span class="sidebar-brand-name">iSEJARAH</span>
+            <span class="sidebar-brand-motto">Data Diperkasa. • Pentaksiran Dipermudah.<br>Kecemerlangan Dipacu</span>
+          </div>
         </div>
-        <button onclick="toggleSidebar()" class="p-1.5 text-slate-400 hover:text-white rounded-lg lg:hidden hover:bg-navy-800">
+        <button onclick="toggleSidebar()" class="sidebar-close-button p-1.5 text-slate-400 hover:text-white rounded-lg lg:hidden hover:bg-navy-800" aria-label="Tutup menu">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -326,9 +331,9 @@
       </nav>
 
       <!-- Sidebar Footer -->
-      <div class="p-4 border-t border-navy-800/80 bg-navy-900/30 text-center">
-        <p id="sidebar-school-name" class="text-[11px] text-slate-400 font-medium">SK Demo Bistari (2026)</p>
-        <p class="text-[10px] text-slate-400 mt-1 font-semibold">Hak Cipta Panitia Sejarah · EST 2026</p>
+      <div class="sidebar-footer p-4 border-t border-navy-800/80 bg-navy-900/30">
+        <p id="sidebar-school-name">SK Demo Bistari (2026)</p>
+        <p class="sidebar-copyright">Hak Cipta Panitia Sejarah · EST 2026</p>
       </div>
     </aside>
 
@@ -382,7 +387,8 @@
 
           <!-- User Profile Display -->
           <div id="topbar-user-profile" class="flex items-center gap-2.5 p-1.5 rounded-lg bg-slate-50 border border-slate-100">
-            <div class="w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+            <div id="user-avatar" class="w-8 h-8 rounded-full bg-navy-900 text-white flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden">
+              <img id="user-avatar-photo" class="hidden" alt="Gambar profil pengguna">
               <span id="user-avatar-initial">P</span>
             </div>
             <div class="hidden md:block text-left pr-1">
@@ -2715,10 +2721,27 @@
       </div>
       <div class="p-6 overflow-y-auto space-y-5">
         <input id="form-user-id" type="hidden">
+        <div class="user-photo-editor">
+          <div id="form-user-photo-preview" class="user-photo-preview" aria-label="Pratonton gambar profil">
+            <img id="form-user-photo-image" class="hidden" alt="Pratonton gambar profil guru">
+            <span id="form-user-photo-initial">G</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-bold text-slate-700">Gambar Profil Guru</p>
+            <p class="text-[10px] text-slate-500 mt-1">Format JPG atau PNG. Saiz fail maksimum 1 MB. Gambar akan dipotong secara automatik supaya kemas.</p>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <label class="user-photo-upload-button">
+                <input id="form-user-photo-input" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" class="hidden" onchange="handleUserPhotoUpload(event)">
+                <i data-lucide="image-up" class="w-4 h-4"></i> Pilih Gambar
+              </label>
+              <button type="button" onclick="removeUserPhoto()" class="user-photo-remove-button"><i data-lucide="trash-2" class="w-4 h-4"></i> Buang</button>
+            </div>
+          </div>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1.5">Nama Penuh *</label>
-            <input id="form-user-name" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Contoh: Cikgu Ahmad bin Ali">
+            <input id="form-user-name" oninput="renderUserPhotoPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="Contoh: Cikgu Ahmad bin Ali">
           </div>
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-700 mb-1.5">MyKad / User ID Guru</label>
@@ -2741,6 +2764,14 @@
           </div>
         </div>
 
+        <div>
+          <label for="form-user-gender" class="block text-xs font-bold text-slate-700 mb-1.5">Jantina untuk sapaan</label>
+          <select id="form-user-gender" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
+            <option value="">Belum ditetapkan — sapaan neutral</option>
+            <option value="L">Lelaki</option>
+            <option value="P">Perempuan</option>
+          </select>
+        </div>
         <div id="user-class-assignment-section" class="rounded-xl border border-slate-200 p-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div><h4 class="text-sm font-bold text-slate-800">Agihan Kelas Sejarah</h4><p class="text-[10px] text-slate-500 mt-0.5">Kelas yang ditanda akan ditugaskan kepada pengguna ini. Menanda kelas yang dimiliki guru lain akan memindahkan tugasan.</p></div>
@@ -2761,7 +2792,7 @@
 
     <div class="login-premium-card w-full overflow-hidden">
         <div class="login-brand-visual">
-            <picture class="brand-login-picture"><source media="(max-width: 640px)" srcset="branding/logo-horizontal-compact.png"><img src="branding/app-icon-master-1024.png" alt="iSEJARAH" class="login-brand-hero-image"></picture><h1 class="brand-login-title">iSEJARAH</h1><p class="brand-motto">Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu</p>
+            <img class="brand-reference-image" src="assets/brand-branding-approved-login-artwork.png" alt="iSEJARAH — Sistem Pengurusan Pentaksiran Sejarah Digital"><p class="brand-motto">Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu</p>
         </div>
 
         <div class="login-premium-body">
@@ -3321,9 +3352,9 @@
       </div>
   </div>
 
-  <script src="app.js?v=88.6"></script>
-  <script src="modules/upgrades.js?v=88.6"></script>
-  <script src="modules/workspace.js?v=86.1"></script>
+  <script src="app.js?v=88.14"></script>
+  <script src="modules/upgrades.js?v=88.14"></script>
+  <script src="modules/workspace.js?v=88.13"></script>
   <script src="responsive.js"></script>
   <script src="pwa.js"></script>
 </body>
