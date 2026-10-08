@@ -4625,7 +4625,8 @@
     }
 
     function phase10SetStatus(mode, detail='') {
-        phase10Mode = mode;
+        // Connection availability is separate from a transient loading/error badge.
+        phase10Mode = phase10Db && phase10SignedInUser ? 'SUPABASE' : mode;
         const badge=document.getElementById('phase10-backend-badge');
         const settingsBadge=document.getElementById('phase10-settings-status');
         const dbStatus=document.getElementById('phase10-db-status');
@@ -4774,9 +4775,7 @@
         }
         let v=value;
         if(field==='academicYear')v=String(value);
-        const {data,error}=await phase10Db.from(table).select('*').eq(column,v);
-        if(error)throw error;
-        return (data||[]).map(phase10DocData);
+        return phase10ReadPages(()=>phase10Db.from(table).select('*').eq(column,v));
     }
 
     async function phase10QueryByIn(collectionKey,field,values) {
@@ -4795,17 +4794,26 @@
         const normalized=field==='academicYear'?unique.map(String):unique;
         const chunks=phase10Chunk(normalized,100);
         const results=await Promise.all(chunks.map(async chunk=>{
-            const {data,error}=await phase10Db.from(table).select('*').in(column,chunk);
-            if(error)throw error;
-            return (data||[]).map(phase10DocData);
+            return phase10ReadPages(()=>phase10Db.from(table).select('*').in(column,chunk));
         }));
         return results.flat();
     }
 
     async function phase10GetAll(collectionKey) {
-        const {data,error}=await phase10Db.from(phase10Collection(collectionKey)).select('*');
-        if(error)throw error;
-        return (data||[]).map(phase10DocData);
+        return phase10ReadPages(()=>phase10Db.from(phase10Collection(collectionKey)).select('*'));
+    }
+
+    async function phase10ReadPages(makeQuery) {
+        const rows=[];
+        // Stable ordering and an empty final page also handle server caps below 500.
+        for(let offset=0;;){
+            const {data,error}=await makeQuery().order('id',{ascending:true}).range(offset,offset+499);
+            if(error)throw error;
+            if(!data?.length)break;
+            rows.push(...data);
+            offset+=data.length;
+        }
+        return rows.map(phase10DocData);
     }
 
     async function phase10GetById(collectionKey,id){
@@ -5231,6 +5239,7 @@
     function phase10ScheduleUiRefresh() {
         clearTimeout(phase10RealtimeRefreshTimer);
         phase10RealtimeRefreshTimer=setTimeout(()=>{
+            if(window.iSejarahLiveSync?.busyEditing())return;
             try{
                 ensureAutoAssessmentTemplates(false,document.getElementById('filter-academic-year')?.value||getActiveAcademicYear());
                 updateClassFilterDropdown();
@@ -5247,6 +5256,10 @@
                 if(!document.getElementById('view-users')?.classList.contains('hidden')&&typeof renderUsers==='function')renderUsers();
                 if(!document.getElementById('view-classes')?.classList.contains('hidden')&&typeof renderClasses==='function')renderClasses();
                 updateDashboardKPIs();
+                const visibleView=[...document.querySelectorAll('[id^="view-"]')].find(el=>!el.classList.contains('hidden'));
+                if(visibleView&&window.iSejarahV66)window.iSejarahV66.render(visibleView.id.slice(5));
+                if(visibleView?.id==='view-students')renderStudents();
+                window.iSejarahLiveSync?.stamp();
             }catch(err){
                 console.warn('Realtime UI refresh:',err);
             }
@@ -5257,9 +5270,9 @@
         clearTimeout(phase10RealtimeRemoteTimer);
         phase10RealtimeRemoteTimer=setTimeout(async()=>{
             try{
-                await phase10LoadRemoteState(profile,false);
-                phase10ScheduleUiRefresh();
-                phase10SetStatus('SUPABASE','Live sync aktif.');
+                if(window.iSejarahLiveSync){await window.iSejarahLiveSync.refresh(false);return;}
+                const ok=await phase10LoadRemoteState(profile,false);
+                if(ok)phase10ScheduleUiRefresh();
             }catch(err){
                 console.warn('Supabase realtime refresh:',err);
             }
@@ -5404,6 +5417,7 @@
             showAlert('Belum Log Masuk Supabase','Aktifkan konfigurasi Supabase dan log masuk semula dahulu.','info');
             return;
         }
+        if(window.iSejarahLiveSync)return window.iSejarahLiveSync.refresh(true);
         await phase10LoadRemoteState(phase10CurrentFirebaseProfile||{role:currentUserRole,id:currentUserId},true);
         updateClassFilterDropdown();
         updateAssessmentDropdown();

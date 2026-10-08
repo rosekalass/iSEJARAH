@@ -73,7 +73,7 @@
   <script src="config.js"></script>
 
   <script src="tailwind.config.js"></script>
-  <link rel="stylesheet" href="styles.css?v=88.14">
+  <link rel="stylesheet" href="styles.css?v=88.15">
   <link rel="stylesheet" href="workspace.css?v=88.13">
   <link rel="stylesheet" href="polish.css?v=86.1">
   <link rel="stylesheet" href="readability.css?v=86.3">
@@ -204,6 +204,16 @@
 <meta name="description" content="Data Diperkasa. • Pentaksiran Dipermudah. • Kecemerlangan Dipacu">
 <link rel="stylesheet" href="branding.css?v=88.6">
 <link rel="stylesheet" href="teacher-panel.css?v=88.9">
+<style>
+.live-sync-toolbar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin:0 0 16px;padding:10px 14px;border:1px solid #d8d4ec;border-radius:12px;background:#f2eefb;color:#453864;font-size:12px}
+.live-sync-button{min-height:44px;padding:8px 16px;border:1px solid #766198;border-radius:10px;background:#e1d8f2;color:#322246;font-weight:700;cursor:pointer}
+.live-sync-button:focus-visible{outline:3px solid #8558ae;outline-offset:3px}
+.live-sync-button:disabled{cursor:wait;opacity:.65}
+html.theme-dark .live-sync-toolbar{background:#302c40;color:#efe8ff;border-color:#736587}
+html.theme-dark .live-sync-button{background:#d9c8ef;color:#302044;border-color:#dac9f0}
+@media(max-width:600px){.live-sync-toolbar{justify-content:space-between}.live-sync-status{flex:1 1 180px}}
+@media print{.live-sync-toolbar{display:none!important}}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -3352,9 +3362,10 @@
       </div>
   </div>
 
-  <script src="app.js?v=88.14"></script>
+  <script src="app.js?v=88.15"></script>
   <script src="modules/upgrades.js?v=88.14"></script>
   <script src="modules/workspace.js?v=88.13"></script>
+  <script src="modules/live-sync.js?v=88.15"></script>
   <script src="responsive.js"></script>
   <script src="pwa.js"></script>
 </body>
