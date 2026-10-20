@@ -3,6 +3,7 @@
     let running=false, lastSuccess='', timer;
     const visible=el=>el&&!el.classList.contains('hidden')&&el.getClientRects().length>0;
     function busyEditing(){
+        if(window.iSejarahItemAnalysis?.hasUnsaved()||window.iSejarahItemAnalysis?.isBusy())return true;
         return phase10PendingPbdWrites.size>0||phase10PendingScoreWrites.size>0||
             (visible(document.getElementById('view-pbd'))&&pbdManualEditMode)||
             (visible(document.getElementById('view-marks'))&&marksManualEditMode)||
@@ -19,6 +20,7 @@
     }
     function install(){
         document.querySelectorAll('[id^="view-"]').forEach(view=>{
+            if(view.id==='view-item-analysis')return; // This module refreshes its own versioned records.
             if(view.querySelector(':scope > .live-sync-toolbar'))return;
             const bar=document.createElement('div');
             bar.className='live-sync-toolbar';
