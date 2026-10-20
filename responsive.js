@@ -84,9 +84,9 @@
 
   function enhanceTable(table) {
     if (!(table instanceof HTMLTableElement)) return;
-    /* JSI owns its 21-column geometry and accessible single scroll region.
-       The generic 132px-per-column rule otherwise expands it to 1900px. */
-    if (table.matches('#view-item-analysis .ia-matrix')) {
+    /* Item-entry and JSI grids own their column geometry and single accessible
+       scroll region. Generic sizing breaks rowspans and expands score cells. */
+    if (table.matches('#view-item-analysis :is(.ia-matrix,.ia-grid)')) {
       table.classList.remove('responsive-smart-table', 'responsive-horizontal-table');
       ['width', 'min-width', 'max-width', 'table-layout', '--responsive-table-min'].forEach(name => table.style.removeProperty(name));
       return;

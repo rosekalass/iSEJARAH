@@ -1,6 +1,10 @@
-# Analisis Item & JSI — v88.17
+# Analisis Item & JSI — v88.18
 
 Open **Analisis & Prestasi → Analisis Item & JSI**. Select session, year, UPSA/UASA and class. The module contains topic analysis, entry of 28 item scores, item statistics, source JSI and paired UPSA/UASA comparison.
+
+## Score-entry layout hotfix
+
+v88.18 gives score entry its own fixed column geometry and single accessible scroll region. Only the pupil-name header/cells are frozen horizontally; A1 (the first cell of header row 2) is no longer incorrectly frozen by a generic first-child rule. The two-row header stays above pupil rows, with an opaque name corner above scrolling item labels. Name width230px (160px on phones), item width54px, score inputs40×36px and compact row padding replace the oversized generic table sizing. Long names wrap naturally. ALL/A/B/C filters, data entry, calculations and saving are unchanged. The generic responsive enhancer now skips only the module-owned JSI and score grids; legacy tables retain their existing behavior.
 
 ## Structure and calculations
 
@@ -45,4 +49,4 @@ The Supabase advisor flags signed-in anonymous sessions for these policies becau
 
 Source SQL: `sql/item-analysis.sql`, followed by `sql/item-analysis-legacy-session.sql`. Both migrations were applied through Supabase before the frontend release. Never rerun these create statements blindly. The six 2026 paper configurations are initialized from the bundled seeds; future sessions can be prepared by an admin.
 
-The service-worker cache version is v88-17-jsi. This hotfix changes only `item-analysis.css`, `modules/item-analysis.js`, `responsive.js`, `index.html`, `sw.js` and this guide. No new SQL migration or data reseeding is needed. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.
+The service-worker cache version is v88-18-scores. This hotfix changes only `item-analysis.css`, `modules/item-analysis.js`, `responsive.js`, `index.html`, `sw.js` and this guide. No new SQL migration or data reseeding is needed. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.

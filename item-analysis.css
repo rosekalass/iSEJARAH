@@ -64,3 +64,30 @@ html body #app#app#app#app main #view-item-analysis .ia-theme-input{width:min(10
 #view-item-analysis .ia-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 #view-item-analysis :is(textarea,.ia-matrix-scroll):focus-visible{outline:3px solid #9770b5!important;outline-offset:3px}
 @media(max-width:600px){#view-item-analysis .ia-jsi-edit-actions{margin-left:0;width:100%}#view-item-analysis .ia-jsi-edit-actions button{flex:1}#view-item-analysis .ia-matrix-budgets{padding:0 16px 14px}html body #app#app#app#app main #view-item-analysis .ia-hero h1{font-size:23px!important}}
+/* Score entry: explicit geometry, with one sticky name column. Never freeze
+   :first-child indiscriminately: row 2 starts with A1, not the pupil name. */
+html body #app#app#app#app main #view-item-analysis .ia-score-scroll{max-height:480px!important;max-width:100%!important;overflow:auto!important;isolation:isolate;scroll-padding-inline-start:calc(230px + 8px);scroll-padding-block-start:86px;touch-action:pan-x pan-y}
+html body #app#app#app#app main #view-item-analysis .ia-grid{--ia-name-width:230px;--ia-score-width:calc(var(--ia-name-width) + 90px + var(--ia-items-width) + 419px);width:var(--ia-score-width)!important;min-width:var(--ia-score-width)!important;max-width:none!important;margin-inline:auto;table-layout:fixed!important;border-collapse:separate!important;border-spacing:0!important;font-size:11px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-score-col-name{width:var(--ia-name-width)!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-score-col-attendance{width:90px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-score-col-item{width:54px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-score-col-part{width:58px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-score-col-total{width:74px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-score-col-percent{width:66px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-score-col-status{width:105px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid :is(th,td){position:static!important;left:auto!important;right:auto!important;z-index:auto!important;box-shadow:none!important;width:auto!important;min-width:0!important;max-width:none!important;padding:7px 5px!important;line-height:1.4!important;white-space:normal!important;word-break:normal!important;overflow-wrap:break-word!important;text-align:center!important;vertical-align:middle!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid thead{position:sticky!important;top:0!important;z-index:10!important;background:var(--ia-bg)!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid thead th{height:32px!important;font-size:10px!important;font-weight:700!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid thead th small{font-size:9px!important;margin-top:2px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid tbody td{height:58px!important;font-size:11px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid :is(th,td).ia-name{position:sticky!important;left:0!important;z-index:2!important;width:var(--ia-name-width)!important;min-width:var(--ia-name-width)!important;max-width:var(--ia-name-width)!important;padding:8px 10px!important;background:var(--ia-bg)!important;box-shadow:2px 0 0 var(--ia-line)!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid tbody tr:nth-child(even)>.ia-name{background:var(--ia-soft)!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid thead th.ia-name{z-index:3!important;background:#eee5f7!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-name b{display:block!important;font-size:11px!important;line-height:1.4!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid td small{font-size:9px!important;line-height:1.4!important;margin-top:3px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid input.ia-score{width:40px!important;min-width:0!important;max-width:100%!important;height:36px!important;min-height:36px!important;padding:5px 2px!important;font-size:14px!important;line-height:1.4!important;text-align:center!important;border-radius:7px!important;font-variant-numeric:tabular-nums;appearance:textfield;-moz-appearance:textfield}
+#view-item-analysis .ia-score::-webkit-inner-spin-button,#view-item-analysis .ia-score::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+html body #app#app#app#app main #view-item-analysis .ia-grid select[data-attendance]{width:78px!important;min-width:0!important;max-width:100%!important;min-height:36px!important;padding:5px!important;font-size:11px!important;border-radius:7px!important}
+html body #app#app#app#app main #view-item-analysis .ia-grid .ia-pill{font-size:9px!important;padding:4px 5px!important;line-height:1.35!important}
+#view-item-analysis .ia-score-scroll:focus-visible{outline:3px solid #9770b5!important;outline-offset:3px}
+@media(max-width:600px){html body #app#app#app#app main #view-item-analysis .ia-grid{--ia-name-width:160px}html body #app#app#app#app main #view-item-analysis .ia-score-scroll{max-height:420px!important;scroll-padding-inline-start:168px}html body #app#app#app#app main #view-item-analysis .ia-grid :is(th,td).ia-name{padding:7px!important}}
