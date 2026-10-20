@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v88-15-live`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-15-live';
+const CACHE_NAME = `${CACHE_PREFIX}v88-16-items`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-16-items';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -49,8 +49,12 @@ const STATIC_ASSETS = [
   './polish.css?v=86.1',
   './workspace.css?v=88.13',
   './modules/workspace.js?v=88.13',
-  './app.js?v=88.15',
-  './modules/live-sync.js?v=88.15',
+  './app.js?v=88.16',
+  './modules/live-sync.js?v=88.16',
+  './item-analysis.css?v=88.16',
+  './modules/item-analysis-data.js?v=88.16',
+  './modules/item-analysis-core.js?v=88.16',
+  './modules/item-analysis.js?v=88.16',
   './responsive.js',
   './pwa.js',
   './config.js',

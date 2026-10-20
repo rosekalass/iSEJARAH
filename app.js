@@ -4951,6 +4951,10 @@
         }
 
         phase10CurrentFirebaseProfile={...profile,loginId:normalizedId};
+        // Bind the new Analisis Item permissions without changing legacy module login.
+        if(window.iSejarahItemAnalysis?.bindSession){
+            await window.iSejarahItemAnalysis.bindSession(normalizedId,password);
+        }
         return phase10CurrentFirebaseProfile;
     }
 
@@ -5764,8 +5768,8 @@
     let selectedLoginRole = 'ADMIN';
 
     const ROLE_ALLOWED_VIEWS = {
-        ADMIN: ['dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings'],
-        GURU_SEJARAH: ['teacher-dashboard', 'completeness', 'attention', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'intervention']
+        ADMIN: ['dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings', 'item-analysis'],
+        GURU_SEJARAH: ['teacher-dashboard', 'completeness', 'attention', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'intervention', 'item-analysis']
     };
 
     function isAdminSession() { return currentUserRole === 'ADMIN'; }
@@ -5908,7 +5912,7 @@
         const teacherAllowedNav = new Set([
             'nav-teacher-dashboard','nav-completeness','nav-attention',
             'nav-marks','nav-pbd','nav-analytics-marks','nav-headcount','nav-analytics-pbd',
-            'nav-intervention'
+            'nav-intervention','nav-item-analysis'
         ]);
         const allNav = [...document.querySelectorAll('.nav-item')];
         const adminGroupLabel=document.getElementById('nav-group-admin-label');
@@ -10869,7 +10873,7 @@
     }
 
     // Navigation Logic
-    const views = ['dashboard', 'teacher-dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings'];
+    const views = ['dashboard', 'teacher-dashboard', 'completeness', 'attention', 'students', 'classes', 'marks', 'pbd', 'analytics-marks', 'headcount', 'analytics-pbd', 'analytics-student', 'analytics-class', 'intervention', 'admin-tools', 'executive-report', 'reports', 'import-export', 'users', 'settings', 'item-analysis'];
     
     function navigateTab(tabId) {
         if (!isViewAllowed(tabId)) {
@@ -10907,6 +10911,8 @@
         if (tabId === 'dashboard') {
             // Slight delay to ensure canvas is visible
             setTimeout(initCharts, 100);
+        } else if (tabId === 'item-analysis') {
+            window.iSejarahItemAnalysis?.open();
         } else if (tabId === 'students') {
             renderStudents();
         } else if (tabId === 'classes') {
