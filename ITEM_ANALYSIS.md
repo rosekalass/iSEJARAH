@@ -1,4 +1,4 @@
-# Analisis Item & JSI — v88.16
+# Analisis Item & JSI — v88.17
 
 Open **Analisis & Prestasi → Analisis Item & JSI**. Select session, year, UPSA/UASA and class. The module contains topic analysis, entry of 28 item scores, item statistics, source JSI and paired UPSA/UASA comparison.
 
@@ -11,7 +11,9 @@ Open **Analisis & Prestasi → Analisis Item & JSI**. Select session, year, UPSA
 - D uses floor(27% × N) in each group, minimum N = 10. Ties are resolved by pupil ID for reproducible results.
 - Topic performance is weighted by maximum marks. Topics with no assessed items have no performance value.
 - Topic mappings inferred from the supplied 2026 UASA papers are prefilled. T5 A20 and T6 A17 remain marked for review and are excluded from topic aggregation until an admin confirms the topic.
-- JSI source allocations remain unchanged. Planned R/S/T is distinct from observed item difficulty. Ambiguous constructs/levels are left unassigned. UPSA allocations and future sessions are not inferred from the UASA paper.
+- Bundled JSI allocations are the starting reference. Admins can update them in **Pemetaan JSI → Edit JSI**, editing theme/context labels and integer allocation cells, then **Simpan JSI**. Topic codes stay immutable, preserving question mappings. Both A and B+C drafts survive section/tab switches. Allocation totals show A /20 and B+C /30; incomplete/unbalanced allocations remain visibly labelled as planning drafts, rather than silently remapping questions. Planned R/S/T is distinct from observed item difficulty. UPSA allocations and future sessions are not inferred from the UASA paper.
+- Matrix saves use the same admin-only, revision-checked paper RPC. They preserve question mappings, thresholds and all pupil responses. Stale/network failures retain the draft. Refresh, polling and paper/class changes cannot overwrite it. Cancel explicitly discards the matrix draft; export includes both matrix sections, including unsaved drafts. Teachers see the matrix read-only.
+- The compact matrix has explicit context/numeric column widths and a single keyboard-accessible horizontal scroll region. Legacy auto-sizing is bypassed only for this matrix. The module title has no generated home icon; the navigation uses one explicit target icon.
 
 ## Import, export and saving
 
@@ -43,4 +45,4 @@ The Supabase advisor flags signed-in anonymous sessions for these policies becau
 
 Source SQL: `sql/item-analysis.sql`, followed by `sql/item-analysis-legacy-session.sql`. Both migrations were applied through Supabase before the frontend release. Never rerun these create statements blindly. The six 2026 paper configurations are initialized from the bundled seeds; future sessions can be prepared by an admin.
 
-The service-worker cache version is v88-16-items. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.
+The service-worker cache version is v88-17-jsi. This hotfix changes only `item-analysis.css`, `modules/item-analysis.js`, `responsive.js`, `index.html`, `sw.js` and this guide. No new SQL migration or data reseeding is needed. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.

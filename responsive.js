@@ -84,6 +84,13 @@
 
   function enhanceTable(table) {
     if (!(table instanceof HTMLTableElement)) return;
+    /* JSI owns its 21-column geometry and accessible single scroll region.
+       The generic 132px-per-column rule otherwise expands it to 1900px. */
+    if (table.matches('#view-item-analysis .ia-matrix')) {
+      table.classList.remove('responsive-smart-table', 'responsive-horizontal-table');
+      ['width', 'min-width', 'max-width', 'table-layout', '--responsive-table-min'].forEach(name => table.style.removeProperty(name));
+      return;
+    }
     /* Report sheets are already composed to the exact A4 preview width.  Do not
        give them an interactive minimum width or scroll shell: the same sheets
        are captured for preview, PDF and print. */

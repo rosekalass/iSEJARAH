@@ -30,4 +30,37 @@ html body #app#app#app main #view-item-analysis .ia-pill.pink{color:#8d3357!impo
 html body #app#app#app main #view-item-analysis .ia-pill.green{color:#316b53!important;background:#dff2e9!important}
 html body #app#app#app main #view-item-analysis .ia-matrix .ia-theme td{background:#ebe2f7!important;color:#5d4679!important}
 html body #app#app#app main #view-item-analysis .ia-matrix td.filled{background:#e0f1e9!important;color:#315c4c!important}
-html body #app#app#app main #view-item-analysis .ia-hero h1::before{display:none!important}
+/* Keep module art explicit: legacy atlas pseudo-icons must not be duplicated. */
+html body #app#app#app#app main #view-item-analysis .ia-hero h1::before,
+html body #app#app#app#app main #view-item-analysis .ia-panel h2::before,
+html body #app#app#app#app #nav-item-analysis::before{content:none!important;display:none!important;width:0!important;margin:0!important}
+html body #app#app#app#app main #view-item-analysis .ia-panel h2{display:block!important;text-align:left!important;padding:0!important;margin:0!important;font-size:19px!important;line-height:1.4!important}
+html body #app#app#app#app #nav-item-analysis>img{display:block!important;width:36px!important;height:36px!important;flex:0 0 36px;object-fit:contain}
+html body #app#app#app#app main #view-item-analysis .ia-hero>div{min-width:0;text-align:left!important}
+html body #app#app#app#app main #view-item-analysis .ia-hero :is(h1,p,.ia-eyebrow){text-align:left!important;padding-left:0!important;margin-left:0!important}
+html body #app#app#app#app main #view-item-analysis .ia-hero h1{display:block!important;font-size:clamp(23px,2.1vw,31px)!important;line-height:1.3!important;margin:6px 0 12px!important}
+html body #app#app#app#app main #view-item-analysis .ia-hero>img{flex-shrink:0}
+/* Deliberately sized rather than the legacy smart-table uniform columns. */
+html body #app#app#app#app main #view-item-analysis .ia-matrix{width:max(100%,1106px)!important;min-width:1106px!important;max-width:none!important;table-layout:fixed!important;font-size:11px!important}
+html body #app#app#app#app main #view-item-analysis .ia-matrix .ia-col-code{width:56px!important}
+html body #app#app#app#app main #view-item-analysis .ia-matrix .ia-col-context{width:230px!important}
+html body #app#app#app#app main #view-item-analysis .ia-matrix .ia-col-value{width:42px!important}
+html body #app#app#app#app main #view-item-analysis .ia-matrix .ia-col-total{width:64px!important}
+html body #app#app#app#app main #view-item-analysis .ia-matrix :is(th,td){width:auto!important;min-width:0!important;height:auto!important;padding:7px 4px!important;font-size:11px!important;line-height:1.45!important;white-space:normal!important;overflow-wrap:normal!important;text-align:center!important;vertical-align:middle!important}
+html body #app#app#app#app main #view-item-analysis .ia-matrix thead th{font-size:10px!important;letter-spacing:0!important;background:#def3eb!important;color:#355847!important}
+html body #app#app#app#app main #view-item-analysis .ia-matrix tbody th[scope=row]{background:var(--ia-bg)!important;color:var(--ia-ink)!important;font-weight:650}
+html body #app#app#app#app main #view-item-analysis .ia-matrix .ia-theme th{background:#e9ddf3!important;color:#5d4679!important;padding:8px!important;font-weight:700}
+html body #app#app#app#app main #view-item-analysis .ia-matrix tfoot :is(th,td){background:#e5eef9!important;color:#3c4b68!important;font-weight:750}
+html body #app#app#app#app main #view-item-analysis .ia-matrix input.ia-matrix-input{width:34px!important;min-width:0!important;max-width:100%!important;min-height:32px!important;height:32px!important;padding:3px 0!important;border-radius:6px!important;text-align:center!important;font-size:11px!important;appearance:textfield;-moz-appearance:textfield}
+#view-item-analysis .ia-matrix-input::-webkit-inner-spin-button,#view-item-analysis .ia-matrix-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+html body #app#app#app#app main #view-item-analysis .ia-context-input{width:100%!important;min-height:40px!important;padding:5px 6px!important;resize:vertical;font:inherit!important;line-height:1.45!important;text-align:center!important;color:var(--ia-ink)!important;background:var(--ia-bg)!important;border:1px solid var(--ia-line)!important;border-radius:6px!important}
+html body #app#app#app#app main #view-item-analysis .ia-theme-input{width:min(100%,560px)!important;min-height:32px!important;padding:4px 8px!important;font-size:11px!important;text-align:center!important}
+#view-item-analysis .ia-jsi-edit-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+#view-item-analysis .ia-matrix-budgets{display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 14px;font-size:11px}
+#view-item-analysis .ia-matrix-budget{display:inline-block;background:#f9ecd7;border:1px solid #eddbbb;color:#6e512b;padding:6px 10px;border-radius:7px}
+#view-item-analysis .ia-matrix-budget[data-balanced=true]{background:#e0f1e9;border-color:#bddccc;color:#315c4c}
+#view-item-analysis .ia-readonly{font-size:11px;color:var(--ia-muted)}
+#view-item-analysis .ia-matrix .ia-theme-label{display:block;position:sticky;left:8px;max-width:100%;text-align:center}
+#view-item-analysis .ia-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#view-item-analysis :is(textarea,.ia-matrix-scroll):focus-visible{outline:3px solid #9770b5!important;outline-offset:3px}
+@media(max-width:600px){#view-item-analysis .ia-jsi-edit-actions{margin-left:0;width:100%}#view-item-analysis .ia-jsi-edit-actions button{flex:1}#view-item-analysis .ia-matrix-budgets{padding:0 16px 14px}html body #app#app#app#app main #view-item-analysis .ia-hero h1{font-size:23px!important}}
