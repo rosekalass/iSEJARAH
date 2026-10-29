@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v88-19-keyboard`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-19-keyboard';
+const CACHE_NAME = `${CACHE_PREFIX}v88-20-attendance`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-20-attendance';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -54,7 +54,7 @@ const STATIC_ASSETS = [
   './item-analysis.css?v=88.19',
   './modules/item-analysis-data.js?v=88.16',
   './modules/item-analysis-core.js?v=88.16',
-  './modules/item-analysis.js?v=88.19',
+  './modules/item-analysis.js?v=88.20',
   './responsive.js?v=88.18',
   './pwa.js',
   './config.js',
