@@ -1,6 +1,12 @@
-# Analisis Item & JSI — v88.18
+# Analisis Item & JSI — v88.19
 
 Open **Analisis & Prestasi → Analisis Item & JSI**. Select session, year, UPSA/UASA and class. The module contains topic analysis, entry of 28 item scores, item statistics, source JSI and paired UPSA/UASA comparison.
+
+## Keyboard score entry
+
+In v88.19, focus any score cell and use **Left/Right** for the previous/next visible item in the same pupil row, **Up/Down** for the same item in the previous/next editable pupil row. **Enter** moves down; **Shift+Enter** moves up. Disabled/TH and read-only cells are skipped. Movement stays within the current filtered section and does not wrap at boundaries. Tab/Shift+Tab and browser modifier/IME behavior are retained.
+
+Arrow navigation does not change a score or create a save draft. At grid boundaries, it stays in place instead of incrementing a number input. The destination value is selected for replacement when typing, and scrolling keeps it clear of the frozen name column and two-row header. A keyboard guide appears above the table. Typing scores still creates a draft; press **Simpan** to save as before.
 
 ## Score-entry layout hotfix
 
@@ -49,4 +55,4 @@ The Supabase advisor flags signed-in anonymous sessions for these policies becau
 
 Source SQL: `sql/item-analysis.sql`, followed by `sql/item-analysis-legacy-session.sql`. Both migrations were applied through Supabase before the frontend release. Never rerun these create statements blindly. The six 2026 paper configurations are initialized from the bundled seeds; future sessions can be prepared by an admin.
 
-The service-worker cache version is v88-18-scores. This hotfix changes only `item-analysis.css`, `modules/item-analysis.js`, `responsive.js`, `index.html`, `sw.js` and this guide. No new SQL migration or data reseeding is needed. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.
+The service-worker cache version is v88-19-keyboard. The keyboard hotfix changes only `item-analysis.css`, `modules/item-analysis.js`, `index.html`, `sw.js` and this guide. No new SQL migration or data reseeding is needed. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.

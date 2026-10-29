@@ -91,3 +91,7 @@ html body #app#app#app#app main #view-item-analysis .ia-grid select[data-attenda
 html body #app#app#app#app main #view-item-analysis .ia-grid .ia-pill{font-size:9px!important;padding:4px 5px!important;line-height:1.35!important}
 #view-item-analysis .ia-score-scroll:focus-visible{outline:3px solid #9770b5!important;outline-offset:3px}
 @media(max-width:600px){html body #app#app#app#app main #view-item-analysis .ia-grid{--ia-name-width:160px}html body #app#app#app#app main #view-item-analysis .ia-score-scroll{max-height:420px!important;scroll-padding-inline-start:168px}html body #app#app#app#app main #view-item-analysis .ia-grid :is(th,td).ia-name{padding:7px!important}}
+/* Keyboard navigation scrolls the focused cell immediately, not via animation. */
+html body #app#app#app#app main #view-item-analysis .ia-score-scroll{scroll-behavior:auto!important}
+html body #app#app#app#app main #view-item-analysis .ia-keyboard-hint{display:flex;flex-wrap:wrap;align-items:center;gap:7px 18px;flex-basis:100%;padding:10px 12px;margin-top:4px;border:1px solid var(--ia-line);border-radius:8px;background:var(--ia-soft)!important;color:var(--ia-ink)!important;font-size:11px;line-height:1.6}
+#view-item-analysis .ia-keyboard-hint kbd{display:inline-block;padding:1px 5px;border:1px solid var(--ia-line);border-radius:4px;background:var(--ia-bg);font:inherit;font-weight:650;white-space:nowrap}
