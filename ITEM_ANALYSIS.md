@@ -1,6 +1,12 @@
-# Analisis Item & JSI — v88.19
+# Analisis Item & JSI — v88.20
 
 Open **Analisis & Prestasi → Analisis Item & JSI**. Select session, year, UPSA/UASA and class. The module contains topic analysis, entry of 28 item scores, item statistics, source JSI and paired UPSA/UASA comparison.
+
+## Attendance without scroll jumps
+
+v88.20 updates attendance, score-field availability and summaries only in the affected pupil row, without replacing the table or attendance control. Horizontal/vertical table position, page position and focus are retained. Confirmed TH still clears that pupil's scores; cancelling the confirmation changes nothing. Hadir enables entry again; cleared scores are not silently restored.
+
+When saving or refreshing needs a complete score-table render, the viewport and focused control are restored only for the same account, session/year/exam, class and section. New filter scopes start with a fresh viewport. Entry is temporarily disabled during refresh so typing cannot be silently ignored. Scrolling during a slow request is respected when it completes. No attendance or score records are changed by preserving the viewport; existing save validation and conflict protection remain in place.
 
 ## Keyboard score entry
 
@@ -47,6 +53,7 @@ The Supabase advisor flags signed-in anonymous sessions for these policies becau
 
 - Pure calculations: all 28 items, /50 total, blank vs zero, invalid C maximum, TH, weighted topic calculation, p/D and minimum N, import header and duplicate-ID checks.
 - Browser with isolated fixtures: save/refresh, conflict retention, actual attached workbook parsing, blank-preserving import, export, A4 print, desktop/tablet/mobile, both themes, teacher navigation/mapping permissions, old marks and PBD navigation. No live pupil responses were used in screenshots.
+- v88.20 attendance regression: 40 synthetic pupils, all 24 viewport/theme/section combinations, same-row DOM/focus and table/page offsets, confirmed/cancelled TH, save conflicts/network errors/retry, explicit/idle refresh, deferred loading and changed class/paper scopes. All pass; existing keyboard/JSI/import/export/permission regressions also pass.
 - Live database transaction, rolled back: server credential verification and bad-password rejection, teacher class boundaries, response save, stale revision rejection, invalid C score rejection, teacher config rejection.
 - Legacy counts after verification: 166 pupils, 449 score records, 1,040 PBD records, unchanged. Six paper configurations were added; no real item responses were inserted by development.
 - A4 PDF was inspected: two distinct pages, topic summary followed by all 28 items.
@@ -55,4 +62,4 @@ The Supabase advisor flags signed-in anonymous sessions for these policies becau
 
 Source SQL: `sql/item-analysis.sql`, followed by `sql/item-analysis-legacy-session.sql`. Both migrations were applied through Supabase before the frontend release. Never rerun these create statements blindly. The six 2026 paper configurations are initialized from the bundled seeds; future sessions can be prepared by an admin.
 
-The service-worker cache version is v88-19-keyboard. The keyboard hotfix changes only `item-analysis.css`, `modules/item-analysis.js`, `index.html`, `sw.js` and this guide. No new SQL migration or data reseeding is needed. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.
+The service-worker cache version is v88-20-attendance. This scroll-position hotfix changes only `modules/item-analysis.js`, `index.html`, `sw.js` and this guide. No new SQL migration or data reseeding is needed. Revert the frontend commit to restore the previous interface; additive item tables can remain so entered data is retained. Do not drop tables as part of a frontend rollback.
