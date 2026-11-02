@@ -117,19 +117,26 @@
     if (!table) return null;
     const output = node('table','ps-table');
     const allRows = Array.from(table.tHead?.rows || []);
-    const columnCount = allRows[allRows.length-1]?.cells.length || table.rows[0]?.cells.length || 0;
+    const columnCount = Math.max(0,...Array.from(table.rows).map(row=>Array.from(row.cells).reduce((n,cell)=>n+cell.colSpan,0)));
     const indices = options.indices || Array.from({length:columnCount},(_,i)=>i).filter(i => !options.omit?.includes(i));
+    let occupied=[];
     const copyRow = (row, header=false) => {
       const tr = node('tr');
-      indices.forEach((index,position) => {
-        const original = row.cells[index];
-        if (!original) return;
+      let index=0;
+      Array.from(row.cells).forEach(original => {
+        while(occupied[index]>0)index++;
+        const start=index,end=start+original.colSpan;
+        index=end;
+        const selectedColumns=indices.filter(i=>i>=start&&i<end);
+        if(original.rowSpan>1)for(let i=start;i<end;i++)occupied[i]=original.rowSpan;
+        if(!selectedColumns.length)return;
         const cell = node(header?'th':'td');
-        if (header) cell.scope='col';
+        cell.colSpan=selectedColumns.length;cell.rowSpan=original.rowSpan;
+        if (header) cell.scope=cell.colSpan>1?'colgroup':'col';
         const source = original.cloneNode(true);
         source.querySelectorAll('svg, i, .hc-avatar, .cute-page-icon, .hc-tov-source, .hc-icon-btn, input, select, textarea, script, style').forEach(element=>element.remove());
         cell.textContent = cellText(source) || '—';
-        if (!header && options.nameColumn === index) {
+        if (!header && selectedColumns.includes(options.nameColumn)) {
           cell.className='ps-name';
           const strong=source.querySelector('.hc-student-main strong, span.block.font-bold');
           const secondary=source.querySelector('.hc-student-main div > span, span.block.text-\\[10px\\]');
@@ -138,18 +145,21 @@
             if(secondary)cell.appendChild(node('small','',cleanText(secondary)));
           }
         }
-        if(!header && options.heatmap && position>0) {
+        if(!header && options.heatmap && selectedColumns[0]>0) {
           const tp=cell.textContent.match(/\bTP([1-6])\b/);
           if(tp)cell.classList.add(`ps-tp-${tp[1]}`);
         }
-        if(header && (options.nameColumn===index))cell.classList.add('ps-name');
+        if(header && selectedColumns.includes(options.nameColumn))cell.classList.add('ps-name');
+        if(!header&&cell.colSpan===indices.length&&original.colSpan>1)cell.className='ps-empty-cell';
         tr.appendChild(cell);
       });
+      occupied=occupied.map(n=>Math.max(0,n-1));
       return tr;
     };
     const thead = node('thead');
     allRows.forEach(row=>thead.appendChild(copyRow(row,true)));
     output.appendChild(thead);
+    occupied=[];
     const tbody=node('tbody');
     Array.from(table.tBodies || []).flatMap(body=>Array.from(body.rows)).forEach(row=>tbody.appendChild(copyRow(row)));
     output.appendChild(tbody);
@@ -226,9 +236,98 @@
     ];
   }
 
-  function scopeFor(kind) {
+  const percent = value => Number.isFinite(value)?`${value.toFixed(1)}%`:'—';
+  const decimal = (value,places=2) => Number.isFinite(value)?value.toFixed(places):'—';
+  const priorityLabel = value => ({HIGH:'Keutamaan Tinggi',SUPPORT:'Perlu Sokongan',MONITOR:'Pantau'}[value]||value||'—');
+
+  function collectComparative() {
+    const insights=Array.from($('class-compare-insights')?.children||[]).map(item=>{
+      const parts=item.querySelectorAll('p');
+      return `<section class="ps-panel"><p class="ps-eyebrow">${escape(cleanText(parts[0]))}</p><h3>${escape(cleanText(parts[1]))}</h3><p class="ps-note">${escape(cleanText(parts[2]))}</p></section>`;
+    }).join('');
+    return [
+      {section:'Analisis Komparatif',title:'Ringkasan perbandingan kelas',html:kpiHtml([
+        kpi('Kelas Dibandingkan',text('class-compare-kpi-classes')),kpi('Jumlah Murid',text('class-compare-kpi-students')),
+        kpi('Purata Markah',text('class-compare-kpi-average'),'Purata antara kelas yang mempunyai markah'),kpi('Kadar Menguasai',text('class-compare-kpi-mastery')),
+        kpi('PBD Lengkap',text('class-compare-kpi-pbd')),kpi('Intervensi Aktif',text('class-compare-kpi-intervention'))
+      ])+`<div class="ps-three-col ps-comparative-insights">${insights}</div><p class="ps-note">${escape(text('class-compare-data-note'))}. Rekod kosong tidak dianggap sebagai sifar. Kelas dalam skop yang sama seperti paparan.</p>`},
+      {section:'Carta Komparatif',title:'Markah, penguasaan dan kelengkapan PBD',html:`<div class="ps-two-col ps-pbd-charts">${figureHtml(chartImage('class-compare-marks-chart','Markah dan kadar menguasai mengikut kelas'))}${figureHtml(chartImage('class-compare-pbd-chart','Kelengkapan PBD dan purata TP'))}</div>`},
+      {section:'Kedudukan Kelas',title:'Perbandingan markah mengikut kelas',table:tableSnapshot($('class-compare-ranking-table'),{indices:[0,1,2,3,4,5,6,7],nameColumn:1,kind:'comparative'}),note:'Susunan mengikut paparan. Purata ialah markah peratus; GPMP tidak ditunjukkan dalam jadual ini.'},
+      {section:'Kedudukan Kelas',title:'Perbandingan PBD dan intervensi',table:tableSnapshot($('class-compare-ranking-table'),{indices:[0,1,2,3,8,9,10],nameColumn:1,kind:'comparative'}),note:'Tempoh PBD mengikut penapis dipilih. — bermaksud data belum mencukupi.'}
+    ];
+  }
+
+  function collectAttention(snapshot) {
+    const rows=snapshot.rows;
+    return [
+      {section:'Murid Perhatian',title:'Keutamaan sokongan dan pemantauan murid',html:kpiHtml([
+        kpi('Keutamaan Tinggi',rows.filter(r=>r.priority==='HIGH').length),kpi('Perlu Sokongan',rows.filter(r=>r.priority==='SUPPORT').length),
+        kpi('Pantau',rows.filter(r=>r.priority==='MONITOR').length),kpi('Jumlah Dalam Senarai',rows.length)
+      ])+`<section class="ps-panel ps-purpose"><h3>Untuk tindakan guru dan panitia</h3><p>Gunakan senarai ini untuk memilih murid bagi pengukuhan, menyemak punca kesukaran dan merekod susulan dalam Program Intervensi.</p><p class="ps-note">Markah, PBD, trend dan keutamaan mengikut paparan Murid Perhatian. Senarai ini ialah petunjuk semakan guru, bukan keputusan diagnosis. Data hanya meliputi kelas yang dibenarkan dalam sesi dipilih.</p></section>`},
+      {section:'Senarai Murid Perhatian',title:'Murid yang memerlukan tindakan susulan',table:dataTable(['Nama Murid','Kelas','Purata Markah','Purata TP','Trend Markah','Keutamaan','Indikator'],rows.map(r=>[
+        r.name,r.className,percent(r.avgMark),Number.isFinite(r.avgTp)?`TP${r.avgTp.toFixed(1)}`:'—',Number.isFinite(r.trend)?`${r.trend>0?'+':''}${r.trend.toFixed(1)} mata peratus`:'—',priorityLabel(r.priority),(r.reasons||[]).join('; ')||'Semak rekod murid dan tetapkan susulan bersama guru.'
+      ]),'attention',0),note:'Rekod kosong tidak dianggap sebagai sifar. Semak profil individu sebelum menentukan intervensi.'}
+    ];
+  }
+
+  function collectExecutive(s) {
+    const scope=s.scopeLabel;
+    const slides=[
+      {section:'Laporan Eksekutif',title:'Ringkasan keputusan mesyuarat panitia',scope,html:kpiHtml([
+        kpi('Murid Aktif',s.students,`${s.classes} kelas`),kpi('Purata Markah',percent(s.average),`${s.taken} calon bermarkah sah`),
+        kpi('MTM',percent(s.mtmPct),'Daripada calon bermarkah sah'),kpi('GPMP',decimal(s.gpmp),'Lebih rendah lebih baik'),
+        kpi('Penguasaan SK',percent(s.pbd.masteryPct),'TP3–TP6 daripada SK berisi'),kpi('Intervensi Aktif',s.interventions.active,`${s.interventions.due} susulan perlu disemak`)
+      ])+`<section class="ps-panel ps-purpose"><h3>Tujuan laporan</h3><p>Satu ringkasan untuk membentangkan pencapaian, mengenal pasti jurang data dan menyepakati tindakan panitia. Gunakan slaid seterusnya untuk memilih kelas fokus dan menetapkan pemilik tindakan serta tarikh semakan dalam Program Intervensi.</p><p class="ps-note">${s.missingMarks} markah belum diisi · ${s.absent} TH · ${s.pbd.missing} rekod SK belum diisi · ${s.pbd.inherited} rekod SK diwarisi daripada Pertengahan. Data diwarisi belum dinilai semula.</p></section>`},
+      {section:'Prestasi Mengikut Kelas',title:'Pencapaian dan kelengkapan markah',scope,table:dataTable(['Kelas','Murid','Ambil','TH','Belum Diisi','Purata','MTM','GPMP'],s.classRows.map(r=>[r.name,r.students,r.taken,r.absent,r.missingMarks,percent(r.average),percent(r.mtmPct),decimal(r.gpmp)]),'executive-classes',0),note:'Satu jenis ujian dipilih. TH dan markah kosong dikecualikan daripada purata, MTM dan GPMP.'},
+      {section:'Prestasi Mengikut Kelas',title:'Kelengkapan dan penguasaan PBD',scope,table:dataTable(['Kelas','SK Berisi','SK Dijangka','Belum Diisi','Penguasaan TP3–TP6'],s.classRows.map(r=>[r.name,r.pbdRecorded,r.pbdExpected,r.pbdMissing,percent(r.pbdMasteryPct)]),'executive-pbd',0),note:'Satu tempoh PBD dipilih. Akhir Tahun menggunakan rekod berkesan termasuk warisan Pertengahan; rekod berisi dikira sekali sahaja.'},
+      {section:'Keutamaan & Tindakan',title:'Perkara untuk diputuskan oleh panitia',scope,table:dataTable(['Keutamaan','Dapatan Data','Tindakan Dicadangkan'],s.priorities.map(r=>[r.title,r.detail,r.action||'Semak modul berkaitan, pilih murid/kelas fokus dan rekodkan tindakan serta tarikh semakan.']),'executive-actions',0),note:'Cadangan berdasarkan data dalam skop. Persetujuan mesyuarat dan penetapan guru pelaksana dibuat oleh panitia; cetakan tidak menyimpan atau mengubah rekod.'}
+    ];
+    const progress=s.pbd.progress;
+    if(progress?.enabled)slides.splice(3,0,{section:'Perkembangan PBD',title:'Pertengahan → Akhir Tahun',scope,html:kpiHtml([
+      kpi('SK Meningkat',progress.improved),kpi('SK Kekal',progress.same),kpi('SK Menurun',progress.declined),kpi('Pasangan Dinilai Semula',progress.reassessed),kpi('SK Baharu Akhir',progress.newFinal),kpi('SK Masih Diwarisi',progress.inherited)
+    ])+'<section class="ps-panel ps-purpose"><h3>Bandingkan bukti pentaksiran yang setara</h3><p>Perubahan dikira bagi pasangan murid × SK yang mempunyai TP Pertengahan dan rekod Akhir yang diisi secara langsung.</p><p class="ps-note">Rekod yang masih diwarisi tidak dikira sebagai penilaian semula atau sebagai kemajuan. Rekod Akhir tanpa TP Pertengahan dipaparkan berasingan sebagai SK baharu Akhir.</p></section>'});
+    return slides;
+  }
+
+  function collectItem(s) {
+    const draftNote=s.draft?`DRAF — ${s.draftCount} murid mempunyai perubahan belum disimpan. `:'';
+    const note=`${draftNote}Hanya rekod 28 item lengkap dianalisis. TH dikecualikan. ${s.source}`;
+    const slides=[
+      {section:'Analisis Item & JSI',title:s.draft?'DRAF · Ringkasan analisis item':'Ringkasan analisis item',html:kpiHtml([
+        kpi('Murid Dalam Skop',s.summary.students),kpi('Rekod Lengkap',s.summary.n),kpi('Purata Skor',percent(s.summary.mean===null?null:s.summary.mean*2)),
+        kpi('Capai Sasaran',s.summary.n?percent(s.summary.targetCount/s.summary.n*100):'—',`${s.summary.targetCount} murid`),
+        kpi('Item Sukar',s.summary.difficultItems),kpi('Tidak Hadir',s.summary.absent)
+      ])+`<section class="ps-panel ps-purpose"><h3>Fokus perbincangan item</h3><p>Kenal pasti topik dan soalan yang memerlukan pengukuhan, kemudian semak padanan JSI sebelum merancang tindakan pengajaran.</p><p>${s.summary.incomplete} murid belum lengkap · ${s.summary.mappedItems} item dipadankan · ${s.summary.reviewItems} padanan perlu pengesahan.</p><p class="ps-note">${escape(note)} Aras R/S/T ialah perancangan JSI; indeks p ialah kesukaran berdasarkan skor sebenar.</p></section>`},
+      {section:'Topik Kritikal',title:'Pencapaian mengikut konteks JSI',table:dataTable(['Kod','Topik / Konteks','Tema','Item','Pencapaian'],s.topics.map(t=>[t.code,t.name,t.theme,t.items.join(', ')||'Belum dipadankan',Number.isFinite(t.p)?percent(t.p*100):'—']),'item-topics',1),note:`${draftNote}Padanan yang masih perlu pengesahan dikecualikan. — bermaksud belum ada skor lengkap atau item yang disahkan.`},
+      {section:'Analisis Setiap Item',title:'Kesukaran, diskriminasi dan tindakan item',table:dataTable(['Item','Konteks JSI','Maks.','p','Kesukaran','D','Skor Penuh','Skor Sifar','Tindakan'],s.items.map(i=>[
+        i.id,`${i.topicName||'Belum dipadankan'}${i.review?' · Perlu pengesahan':''}`,i.max,decimal(i.p),i.difficulty,decimal(i.D),s.summary.n?i.full:'—',s.summary.n?i.zero:'—',i.action
+      ]),'item-results',1),note:`${draftNote}p = jumlah skor ÷ (N × maksimum). D menggunakan kumpulan ${Math.round(s.settings.group*100)}%, minimum N ${s.settings.minN}.`},
+      {section:'Pemetaan Soalan',title:'Padanan soalan kepada konteks JSI',table:dataTable(['Item','Maks.','Kod','Konteks','Konstruk','Aras','Rujukan Soalan','Status'],s.mapping.map(m=>[m.id,m.max,m.topicCode,m.topicName,m.construct,m.level,[m.summary,m.page?`m/s ${m.page}`:'',m.warning].filter(Boolean).join(' · '),m.status]),'item-mapping',3),note:'Pemetaan semasa yang telah disimpan oleh admin. Suntingan JSI tidak mengubah skor murid secara automatik.'}
+    ];
+    const support=s.topics.flatMap(t=>(t.support||[]).map(p=>[p.name,p.className,`${t.code} · ${t.name}`,t.items.join(', ')]));
+    slides.push({section:'Topik Kritikal',title:'Murid untuk pengukuhan mengikut topik',table:dataTable(['Nama Murid','Kelas','Topik','Item Berkaitan'],support,'item-support',0),note:`${draftNote}Senarai berdasarkan pengiraan topik sedia ada. Gunakan sebagai rujukan merancang pengukuhan.`});
+    s.matrices.forEach(matrix=>{
+      for(let group=0;group<3;group++) {
+        const start=group*6,columns=matrix.columns.slice(start,start+6);
+        const rows=matrix.rows.map(r=>[r.code,r.name,...r.values.slice(start,start+6).map(n=>n||'—'),r.total??'—']);
+        rows.push(['JUMLAH','Jumlah lajur',...matrix.totals.slice(start,start+6),matrix.total??'—']);
+        slides.push({section:`Matriks JSI ${matrix.part}`,title:`${matrix.label} · ${matrix.constructs.slice(group*2,group*2+2).join(' & ')}`,table:dataTable(['Kod','Konteks',...columns,'Jumlah Konteks'],rows,'jsi-matrix',1),note:`Agihan penuh ${matrix.total??'—'} / ${matrix.expected} markah · ${matrix.balanced?'Seimbang':'Draf agihan — belum seimbang'}. R = Rendah · S = Sederhana · T = Tinggi. Jumlah konteks merangkumi semua 18 lajur konstruk, bukan hanya kumpulan ini.`});
+      }
+    });
+    if(s.comparison) {
+      slides.push({section:'UPSA–UASA',title:'Perbandingan analisis item UPSA dan UASA',table:dataTable(['Pentaksiran','Rekod Lengkap','Purata /50','Purata %','Tidak Hadir'],s.comparison.summary.map(r=>[r.exam,r.n,decimal(r.mean),percent(r.mean===null?null:r.mean*2),r.absent]),'item-comparison',0),note:s.comparison.note});
+      slides.push({section:'UPSA–UASA',title:'Perubahan murid yang sama',table:dataTable(['Nama Murid','Kelas','UPSA %','UASA %','Beza Mata Peratus'],s.comparison.paired.map(r=>[r.name,r.className,percent(r.upsa),percent(r.uasa),Number.isFinite(r.difference)?`${r.difference>0?'+':''}${r.difference.toFixed(1)}`:'—']),'item-paired',0),note:s.comparison.note});
+    } else slides.push({section:'UPSA–UASA',title:'Perbandingan UPSA–UASA',html:'<section class="ps-panel ps-purpose"><h3>Perbandingan belum dimuatkan</h3><p>Buka tab UPSA–UASA dalam Analisis Item untuk memuatkan kedua-dua set yang telah disimpan, kemudian jana slaid semula.</p><p class="ps-note">Cetakan tidak menukar tab, menarik data tambahan atau menyimpan draf. Perbandingan tidak disertakan semasa terdapat perubahan skor belum disimpan.</p></section>'});
+    return slides;
+  }
+
+  function scopeFor(kind, snapshot) {
     const school=text('topbar-school-name') || text('sidebar-school-name') || 'Panitia Sejarah';
     const date=new Date().toLocaleString('ms-MY',{dateStyle:'medium',timeStyle:'short'});
+    if(kind==='comparative')return {school,date,title:'Analisis Komparatif Kelas Sejarah',scope:[selected('class-compare-session'),selected('class-compare-year'),selected('class-compare-assessment-type'),selected('class-compare-period')].filter(Boolean).join(' · '),note:`Susunan: ${selected('class-compare-sort')}`};
+    if(kind==='attention')return {school,date,title:'Murid Perhatian Sejarah',scope:`Sesi ${snapshot.academicYear} · Kelas yang dibenarkan`,note:'Indikator perhatian sama seperti paparan semasa.'};
+    if(kind==='executive')return {school,date,title:'Laporan Eksekutif Panitia Sejarah',scope:snapshot.scopeLabel,note:'Ringkasan pencapaian, jurang data dan tindakan untuk mesyuarat panitia.'};
+    if(kind==='item')return {school,date,title:'Analisis Item & JSI Sejarah',scope:[`Sesi ${snapshot.scope.academicYear}`,`Tahun ${snapshot.scope.year}`,snapshot.scope.exam,snapshot.scope.className,snapshot.draft?'DRAF — belum disimpan':'Rekod tersimpan'].join(' · '),note:snapshot.source};
     if(kind==='dashboard')return {
       school,date,title:'Dashboard Prestasi Panitia Sejarah',
       scope:[selected('filter-academic-year'),selected('filter-tahun'),selected('filter-kelas'),$('filter-assessment')?.value?selected('filter-assessment'):'Rekod markah dalam skop semasa'].filter(Boolean).join(' · '),
@@ -331,7 +430,7 @@
       startPage();
       if(!rows.length) {
         const row=doc.createElement('tr'),cell=doc.createElement('td');
-        cell.colSpan=Math.max(1,original.tHead?.rows[0]?.cells.length || 1);cell.className='ps-empty';cell.textContent='Tiada rekod sepadan dengan skop atau penapis semasa.';row.appendChild(cell);body.appendChild(row);
+        cell.colSpan=Math.max(1,...Array.from(original.tHead?.rows||[]).map(r=>Array.from(r.cells).reduce((n,c)=>n+c.colSpan,0)));cell.className='ps-empty-cell';cell.textContent='Tiada rekod sepadan dengan skop atau penapis semasa.';row.appendChild(cell);body.appendChild(row);
       }
       rows.forEach(sourceRow=>{
         const row=doc.importNode(sourceRow,true);body.appendChild(row);
@@ -405,15 +504,22 @@
   }
 
   function open(kind) {
-    const views={headcount:'view-headcount',pbd:'view-analytics-pbd',dashboard:'view-dashboard',marks:'view-analytics-marks'};
-    const collectors={headcount:collectHeadcount,pbd:collectPbd,dashboard:collectDashboard,marks:collectMarks};
+    const views={headcount:'view-headcount',pbd:'view-analytics-pbd',dashboard:'view-dashboard',marks:'view-analytics-marks',comparative:'view-analytics-class',attention:'view-attention',executive:'view-executive-report',item:'view-item-analysis'};
+    const collectors={headcount:collectHeadcount,pbd:collectPbd,dashboard:collectDashboard,marks:collectMarks,comparative:collectComparative,attention:collectAttention,executive:collectExecutive,item:collectItem};
     if(!views[kind])return;
     const view=$(views[kind]);
     if(!view||view.classList.contains('hidden'))return;
+    const snapshot=kind==='item'?window.iSejarahItemAnalysis?.presentationSnapshot?.():kind==='executive'?window.iSejarahV66?.getExecutiveSnapshot?.():kind==='attention'?window.iSejarahV66?.getAttentionSnapshot?.():null;
+    if(['item','executive','attention'].includes(kind)&&(!snapshot||snapshot.available===false)) {
+      const message=snapshot?.reason||'Data belum tersedia. Muat semula bahagian ini sebelum menjana slaid.';
+      if(typeof showAlert==='function')showAlert('Slaid belum boleh dijana',message,'warning');
+      else window.alert(message);
+      return;
+    }
     if(dialog)close();
     previousFocus=document.activeElement;
-    const metadata=scopeFor(kind);
-    current={metadata,slides:collectors[kind]()};
+    const metadata=scopeFor(kind,snapshot);
+    current={metadata,slides:collectors[kind](snapshot)};
     dialog=node('dialog','presentation-print-dialog');
     dialog.id='isejarah-presentation-dialog';dialog.setAttribute('aria-labelledby','ps-dialog-title');
     dialog.innerHTML=`<div class="presentation-print-toolbar"><div><p>PRATONTON CETAKAN</p><h2 id="ps-dialog-title">${escape(metadata.title)}</h2></div><div class="presentation-print-actions"><label for="ps-print-format">Saiz halaman<select id="ps-print-format" data-ps-format><option value="slides">Slaid 16:9</option><option value="a4">A4 landskap</option></select></label><button type="button" data-ps-print disabled>Cetak / Simpan PDF</button><button type="button" data-ps-close aria-label="Tutup pratonton cetakan">Tutup</button></div></div><p class="presentation-print-status" data-ps-status role="status"></p><iframe class="presentation-print-frame" title="Pratonton slaid cetakan" sandbox="allow-same-origin allow-modals"></iframe><p class="presentation-print-help">Pilih “Save as PDF” / “Simpan sebagai PDF” dalam tetingkap cetakan. Gunakan skala 100% dan matikan header/footer pelayar.</p>`;
@@ -440,7 +546,11 @@
       {kind:'headcount',id:'headcount-presentation-print-btn',group:document.querySelector('#view-headcount .hc-page-header > div:last-child')},
       {kind:'pbd',id:'pbd-presentation-print-btn',group:document.querySelector('#view-analytics-pbd .analysis-export-btn--pbd')?.parentElement},
       {kind:'dashboard',id:'dashboard-presentation-print-btn',group:$('dashboard-presentation-print-actions')},
-      {kind:'marks',id:'marks-presentation-print-btn',group:document.querySelector('#view-analytics-marks .analysis-export-btn--marks')?.parentElement}
+      {kind:'marks',id:'marks-presentation-print-btn',group:document.querySelector('#view-analytics-marks .analysis-export-btn--marks')?.parentElement},
+      {kind:'comparative',id:'comparative-presentation-print-btn',group:document.querySelector('#view-analytics-class button[onclick="exportClassComparisonCSV()"]')?.parentElement},
+      {kind:'attention',id:'attention-presentation-print-btn',group:actionBar('view-attention','attention-presentation-print-actions')},
+      {kind:'executive',id:'executive-presentation-print-btn',group:$('executive-print-actions')},
+      {kind:'item',id:'item-presentation-print-btn',group:document.querySelector('#view-item-analysis .ia-actions')}
     ];
     targets.forEach(({kind,id,group})=>{
       if(!group||$(id))return;
@@ -449,7 +559,18 @@
     });
   }
 
+  function actionBar(viewId,id) {
+    const view=$(viewId);if(!view)return null;
+    if(!$(id)){const bar=node('div','presentation-print-actions-row');bar.id=id;view.firstElementChild?.after(bar);}
+    return $(id);
+  }
+
   window.iSejarahPresentationPrint={open,close,install};
   window.addEventListener('resize',setPreviewScale);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
+  // Additive modules inject their views after startup. Observe only view creation;
+  // avoid re-rendering a source screen, changing tabs or touching an active draft.
+  new MutationObserver(records=>{
+    if(records.some(record=>Array.from(record.addedNodes).some(n=>n.nodeType===1&&(/^view-(attention|executive-report|item-analysis)$/.test(n.id)||n.querySelector?.('#view-attention,#view-executive-report,#view-item-analysis')))))install();
+  }).observe(document.body,{childList:true,subtree:true});
 })();
