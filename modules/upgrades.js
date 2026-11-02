@@ -4,10 +4,10 @@
 
   const $ = (id) => document.getElementById(id);
   const safe = (value) => typeof escapeHtml === 'function' ? escapeHtml(String(value ?? '')) : String(value ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const ay = () => typeof getActiveAcademicYear === 'function' ? String(getActiveAcademicYear()) : String($('filter-academic-year')?.value || '2026');
-  const activeClasses = () => (appState.classes || []).filter(c => c.active !== false && String(c.academicYear || ay()) === ay());
+  const ay = () => String($('filter-academic-year')?.value || (typeof getActiveAcademicYear === 'function' ? getActiveAcademicYear() : '2026'));
+  const activeClasses = () => typeof canonicalActiveClasses === 'function' ? canonicalActiveClasses(ay()) : (appState.classes || []).filter(c => c.active !== false && String(c.academicYear || ay()) === ay());
   const permittedClasses = () => activeClasses().filter(c => currentUserRole !== 'GURU_SEJARAH' || c.teacherId === currentUserId);
-  const classStudents = (classId) => (appState.students || []).filter(s => s.active !== false && s.classId === classId);
+  const classStudents = (classId) => (appState.students || []).filter(s => s.active !== false && s.status === 'Aktif' && s.classId === classId && String(s.academicYear || ay()) === ay());
   const actualScores = () => typeof getActualScoreRecords === 'function' ? getActualScoreRecords() : (appState.scores || []);
   const pct = (score) => {
     if (Number.isFinite(Number(score.percentage))) return Number(score.percentage);
@@ -15,9 +15,29 @@
     const total = Number(score.totalMarks || score.maxScore || 100);
     return total ? Number(score.score || score.marks || 0) / total * 100 : 0;
   };
-  const assessmentYear = (assessment) => String(assessment?.academicYear || assessment?.year || ay());
+  const assessmentYear = (assessment) => String(assessment?.academicYear || ay());
   const periodOf = (record) => String(record?.assessmentPeriod || record?.period || '').toUpperCase();
   const card = (label, value, note, tone='mint') => `<article class="upgrade-kpi tone-${tone}"><p>${safe(label)}</p><strong>${safe(value)}</strong><span>${safe(note)}</span></article>`;
+  let completionFilters = null;
+  function completionScope() {
+    if (!completionFilters) {
+      const hasFinal = (appState.pbdRecords || []).some(r => String(r.academicYear || ay()) === ay() && periodOf(r) === 'AKHIR' && Number(r.tp) >= 1 && Number(r.tp) <= 6);
+      completionFilters = {assessmentType:'ALL', period:hasFinal ? 'AKHIR' : 'PERTENGAHAN'};
+    }
+    return completionFilters;
+  }
+  function completionClasses() {
+    const year = $('filter-tahun')?.value || 'ALL', classId = $('filter-kelas')?.value || 'ALL';
+    return permittedClasses().filter(c => (year === 'ALL' || String(c.year) === year) && (classId === 'ALL' || c.id === classId));
+  }
+  const validTp = r => r && Number.isInteger(Number(r.tp)) && Number(r.tp) >= 1 && Number(r.tp) <= 6;
+  function completeScore(record) {
+    if (!record) return false;
+    if (record.absent === true) return true;
+    // A note-only record is not a mark. Zero is a real, completed mark.
+    const value = record.rawScore;
+    return value !== null && value !== undefined && String(value).trim() !== '' && Number.isFinite(Number(value)) && Number(value) >= 0;
+  }
 
   function addNav(groupId, id, label, icon, adminOnly=false) {
     const group = $(groupId);
@@ -41,17 +61,31 @@
       <section id="view-executive-report" class="hidden space-y-5"><div class="upgrade-heading"><div><p>Mesyuarat panitia</p><h1>Laporan Eksekutif Panitia</h1><span>Ringkasan Tahun 4–6, GPMP, PBD dan intervensi</span></div><i data-lucide="presentation"></i></div><div id="executive-report-content"></div></section>`);
   }
 
-  function completionForClass(cls) {
+  function completionForClass(cls, scope=completionScope()) {
     const students = classStudents(cls.id);
     const studentIds = new Set(students.map(s => s.id));
-    const assessments = (appState.assessments || []).filter(a => assessmentYear(a) === ay() && (!a.classId || a.classId === cls.id));
+    const assessments = [...new Map((appState.assessments || []).filter(a => assessmentYear(a) === ay() && a.classId === cls.id && (!a.subject || String(a.subject).toUpperCase() === 'SEJARAH') && (scope.assessmentType === 'ALL' || a.type === scope.assessmentType)).map(a => [a.id,a])).values()];
     const assessmentIds = new Set(assessments.map(a=>a.id));
-    const scores = [...new Map(actualScores().filter(s => studentIds.has(s.studentId) && assessmentIds.has(s.assessmentId)).map(s=>[`${s.studentId}|${s.assessmentId}`,s])).values()];
+    const scores = new Map();
+    // Use the same first record displayed by Pengisian Markah; duplicates cannot inflate completion.
+    actualScores().filter(s => studentIds.has(s.studentId) && assessmentIds.has(s.assessmentId)).forEach(s => {
+      const key = JSON.stringify([s.studentId,s.assessmentId]);
+      if (!scores.has(key)) scores.set(key,s);
+    });
+    const recordedMarks = [...scores.values()].filter(completeScore).length;
     const expectedMarks = students.length * assessments.length;
-    const pbd = [...new Map((appState.pbdRecords || []).filter(r => studentIds.has(r.studentId) && String(r.academicYear || ay()) === ay() && Number(r.tp)>=1 && Number(r.tp)<=6).map(r=>[`${r.studentId}|${r.dskpId}|${periodOf(r)}`,r])).values()];
-    const dskpCount = Math.max(1, (appState.dskp || []).filter(d => d.active !== false && (!d.yearLevel || Number(d.yearLevel) === Number(cls.year))).length);
-    const expectedPbd = students.length * dskpCount * 2;
-    return {students:students.length, marks:expectedMarks ? Math.min(100,Math.round(scores.length/expectedMarks*100)) : 0, pbd:expectedPbd ? Math.min(100,Math.round(pbd.length/expectedPbd*100)) : 0, missingMarks:Math.max(0,expectedMarks-scores.length), missingPbd:Math.max(0,expectedPbd-pbd.length)};
+    const template = getPbdMatrixTemplate(Number(cls.year));
+    const dskp = [...new Map(template.groups.flatMap(group => group.topics.map((_,index) => pbdMatrixDskpForTopic(Number(cls.year),group.key,index))).filter(Boolean).map(d => [d.id,d])).values()];
+    let recordedPbd = 0, inheritedPbd = 0;
+    students.forEach(student => dskp.forEach(d => {
+      const record = getEffectivePbdMatrixRecord(student.id,d.id,scope.period,ay());
+      if (validTp(record)) {recordedPbd++; if (record.inherited) inheritedPbd++;}
+    }));
+    const expectedPbd = students.length * dskp.length;
+    const percentage = (filled,total) => total ? (filled === total ? 100 : Math.min(99,Math.round(filled / total * 100))) : 0;
+    return {students:students.length,recordedMarks,expectedMarks,recordedPbd,expectedPbd,inheritedPbd,
+      marks:percentage(recordedMarks,expectedMarks),pbd:percentage(recordedPbd,expectedPbd),
+      missingMarks:Math.max(0,expectedMarks-recordedMarks),missingPbd:Math.max(0,expectedPbd-recordedPbd)};
   }
 
   function attentionRows() {
@@ -69,7 +103,7 @@
   }
 
   function renderTeacherDashboard() {
-    const classes = permittedClasses();
+    const classes = completionClasses();
     const stats = classes.map(c => ({c, ...completionForClass(c)}));
     const attention = attentionRows();
     const nearMiss = attention.filter(r => r.avgMark >= 40 && r.avgMark < 50);
@@ -80,22 +114,85 @@
   }
 
   function renderCompleteness() {
-    const rows = permittedClasses().map(c => ({c,...completionForClass(c)}));
+    const scope = completionScope();
+    const rows = completionClasses().map(c => ({c,...completionForClass(c,scope)}));
     const totalStudents=rows.reduce((sum,x)=>sum+x.students,0);
-    const completeMarks=rows.filter(x=>x.marks===100).length;
-    const completePbd=rows.filter(x=>x.pbd===100).length;
-    const makeActions=x=>`<div class="completion-actions">${x.missingMarks?`<button class="text-action" onclick="iSejarahV66.openCompletion('marks','${safe(x.c.id)}')">Markah</button>`:''}${x.missingPbd?`<button class="text-action pbd" onclick="iSejarahV66.openCompletion('pbd','${safe(x.c.id)}')">PBD</button>`:''}${!x.missingMarks&&!x.missingPbd?'<span class="completion-ok">✓ Lengkap</span>':''}</div>`;
-    $('completeness-content').innerHTML = `<div class="completion-summary" aria-label="Ringkasan kelengkapan"><article><span>Kelas dipantau</span><b>${rows.length}</b></article><article><span>Jumlah murid</span><b>${totalStudents}</b></article><article><span>Markah lengkap</span><b>${completeMarks}/${rows.length}</b></article><article><span>PBD lengkap</span><b>${completePbd}/${rows.length}</b></article></div><div class="upgrade-panel table-shell completeness-table-shell"><table class="upgrade-table completeness-table"><caption class="sr-only">Status kelengkapan markah dan PBD mengikut kelas</caption><thead><tr><th scope="col">Kelas</th><th scope="col">Murid</th><th scope="col">Markah Lengkap</th><th scope="col">PBD Lengkap</th><th scope="col">Belum Lengkap</th><th scope="col">Tindakan</th></tr></thead><tbody>${rows.map(x=>`<tr><td data-label="Kelas"><b>${safe(x.c.name)}</b><small>Tahun ${safe(x.c.year)}</small></td><td data-label="Murid"><strong class="table-number">${x.students}</strong></td><td data-label="Markah"><div class="completion-cell"><span class="completion-badge ${x.marks===100?'done':''}">${x.marks}%</span><span class="completion-track" aria-hidden="true"><i style="width:${x.marks}%"></i></span></div></td><td data-label="PBD"><div class="completion-cell"><span class="completion-badge ${x.pbd===100?'done':''}">${x.pbd}%</span><span class="completion-track pbd" aria-hidden="true"><i style="width:${x.pbd}%"></i></span></div></td><td data-label="Belum lengkap"><span class="missing-count ${x.missingMarks?'':'zero'}">${x.missingMarks} markah</span><span class="missing-count ${x.missingPbd?'':'zero'}">${x.missingPbd} PBD</span></td><td data-label="Tindakan">${makeActions(x)}</td></tr>`).join('')}</tbody></table><div class="completion-mobile">${rows.map(x=>`<article><header><div><b>${safe(x.c.name)}</b><small>Tahun ${safe(x.c.year)} · ${x.students} murid</small></div>${x.missingMarks||x.missingPbd?'<span class="needs-action">Perlu tindakan</span>':'<span class="is-complete">Lengkap</span>'}</header><div class="mobile-progress"><label><span>Markah</span><b>${x.marks}%</b></label><i><em style="width:${x.marks}%"></em></i></div><div class="mobile-progress pbd"><label><span>PBD</span><b>${x.pbd}%</b></label><i><em style="width:${x.pbd}%"></em></i></div><p>${x.missingMarks} markah · ${x.missingPbd} PBD belum lengkap</p>${makeActions(x)}</article>`).join('')}</div></div>`;
+    const completeMarks=rows.filter(x=>x.expectedMarks>0 && x.missingMarks===0).length;
+    const completePbd=rows.filter(x=>x.expectedPbd>0 && x.missingPbd===0).length;
+    const makeActions=x=>x.students===0?'<span>Tiada murid aktif</span>':`<div class="completion-actions">${x.missingMarks?`<button class="text-action" onclick="iSejarahV66.openCompletion('marks','${safe(x.c.id)}')">Markah</button>`:''}${x.missingPbd?`<button class="text-action pbd" onclick="iSejarahV66.openCompletion('pbd','${safe(x.c.id)}')">PBD</button>`:''}${!x.missingMarks&&!x.missingPbd?'<span class="completion-ok">✓ Lengkap</span>':''}</div>`;
+    const periodLabel = scope.period === 'AKHIR' ? 'Akhir Tahun' : 'Pertengahan Tahun';
+    const detail = (x,kind) => kind === 'marks'
+      ? `${x.recordedMarks} / ${x.expectedMarks} rekod${x.expectedMarks?'':' · Tiada ujian dalam skop'}`
+      : `${x.recordedPbd} / ${x.expectedPbd} SK${x.inheritedPbd?` · ${x.inheritedPbd} diwarisi`:''}`;
+    const cell = (x,kind) => `<div class="completion-cell"><span class="completion-badge ${x[kind]===100?'done':''}">${x[kind]}%</span><span class="completion-track ${kind==='pbd'?'pbd':''}" aria-hidden="true"><i style="width:${x[kind]}%"></i></span></div><small>${safe(detail(x,kind))}</small>`;
+    const sessions = typeof normalizedAcademicSessions==='function' ? normalizedAcademicSessions() : [...new Set([ay(),...(appState.classes||[]).map(c=>String(c.academicYear||ay()))])].sort().reverse().map(year=>({year,label:year}));
+    const selectedYear = $('filter-tahun')?.value || 'ALL', selectedClass = $('filter-kelas')?.value || 'ALL';
+    const selectableClasses = permittedClasses().filter(c=>selectedYear==='ALL'||String(c.year)===selectedYear);
+    $('completeness-content').innerHTML = `
+      <div class="upgrade-panel completion-scope">
+        <div class="panel-title"><h2>Skop kelengkapan · Sesi ${safe(ay())}</h2></div>
+        <div class="form-row">
+          <label for="completion-session">Sesi<select id="completion-session" onchange="iSejarahV66.setCompletionContext('session',this.value)">${sessions.map(s=>`<option value="${safe(s.year)}" ${s.year===ay()?'selected':''}>${safe(s.label)}</option>`).join('')}</select></label>
+          <label for="completion-year">Tahun<select id="completion-year" onchange="iSejarahV66.setCompletionContext('year',this.value)">${['ALL','4','5','6'].map(year=>`<option value="${year}" ${selectedYear===year?'selected':''}>${year==='ALL'?'Semua Tahun':'Tahun '+year}</option>`).join('')}</select></label>
+          <label for="completion-class">Kelas<select id="completion-class" onchange="iSejarahV66.setCompletionContext('classId',this.value)"><option value="ALL">Semua Kelas</option>${selectableClasses.map(c=>`<option value="${safe(c.id)}" ${selectedClass===c.id?'selected':''}>${safe(c.name)}</option>`).join('')}</select></label>
+          <label for="completion-exam">Markah ujian<select id="completion-exam" onchange="iSejarahV66.setCompletionScope('assessmentType',this.value)">${['ALL','DIAGNOSTIK','UPSA','UASA'].map(type=>`<option value="${type}" ${scope.assessmentType===type?'selected':''}>${type==='ALL'?'Semua ujian':type}</option>`).join('')}</select></label>
+          <label for="completion-period">Tempoh PBD<select id="completion-period" onchange="iSejarahV66.setCompletionScope('period',this.value)"><option value="PERTENGAHAN" ${scope.period==='PERTENGAHAN'?'selected':''}>Pertengahan Tahun</option><option value="AKHIR" ${scope.period==='AKHIR'?'selected':''}>Akhir Tahun</option></select></label>
+        </div>
+        <p class="completion-explanation">PBD dikira daripada SK dalam jadual pengisian bagi ${safe(periodLabel)}. Nilai Pertengahan yang dibawa ke Akhir Tahun dikira sekali dan dilabel diwarisi. Markah 0 dan TH dikira lengkap; rekod kosong atau catatan sahaja belum lengkap.</p>
+      </div>
+      <div class="completion-summary" aria-label="Ringkasan kelengkapan"><article><span>Kelas dipantau</span><b>${rows.length}</b></article><article><span>Jumlah murid</span><b>${totalStudents}</b></article><article><span>Kelas markah lengkap</span><b>${completeMarks}/${rows.length}</b></article><article><span>Kelas PBD lengkap</span><b>${completePbd}/${rows.length}</b></article></div>
+      <div class="upgrade-panel table-shell completeness-table-shell"><table class="upgrade-table completeness-table"><caption class="sr-only">Kelengkapan sesi ${safe(ay())}; markah ${safe(scope.assessmentType)}; PBD ${safe(periodLabel)}</caption><thead><tr><th scope="col">Kelas</th><th scope="col">Murid</th><th scope="col">Markah Lengkap</th><th scope="col">PBD Lengkap</th><th scope="col">Belum Lengkap</th><th scope="col">Tindakan</th></tr></thead><tbody>${rows.map(x=>`<tr><td data-label="Kelas"><b>${safe(x.c.name)}</b><small>Tahun ${safe(x.c.year)}</small></td><td data-label="Murid"><strong class="table-number">${x.students}</strong></td><td data-label="Markah">${cell(x,'marks')}</td><td data-label="PBD">${cell(x,'pbd')}</td><td data-label="Belum lengkap"><span class="missing-count ${x.missingMarks?'':'zero'}">${x.missingMarks} markah</span><span class="missing-count ${x.missingPbd?'':'zero'}">${x.missingPbd} PBD</span></td><td data-label="Tindakan">${makeActions(x)}</td></tr>`).join('')||'<tr><td colspan="6">Tiada kelas dalam skop ini.</td></tr>'}</tbody></table>
+      <div class="completion-mobile">${rows.map(x=>`<article><header><div><b>${safe(x.c.name)}</b><small>Tahun ${safe(x.c.year)} · ${x.students} murid</small></div>${x.missingMarks||x.missingPbd?'<span class="needs-action">Perlu tindakan</span>':'<span class="is-complete">Lengkap</span>'}</header><div class="mobile-progress"><label><span>Markah</span><b>${x.marks}%</b></label><i><em style="width:${x.marks}%"></em></i></div><p>${safe(detail(x,'marks'))}</p><div class="mobile-progress pbd"><label><span>PBD · ${safe(periodLabel)}</span><b>${x.pbd}%</b></label><i><em style="width:${x.pbd}%"></em></i></div><p>${safe(detail(x,'pbd'))}</p><p>${x.missingMarks} markah · ${x.missingPbd} PBD belum lengkap</p>${makeActions(x)}</article>`).join('')||'<p class="upgrade-empty">Tiada kelas dalam skop ini.</p>'}</div></div>`;
+  }
+
+  function setCompletionScope(field,value) {
+    const allowed = {assessmentType:['ALL','DIAGNOSTIK','UPSA','UASA'],period:['PERTENGAHAN','AKHIR']};
+    if (!allowed[field]?.includes(value)) return;
+    completionScope()[field] = value;
+    renderCompleteness();
+    $(field==='period'?'completion-period':'completion-exam')?.focus({preventScroll:true});
+  }
+
+  function setCompletionContext(field,value) {
+    if(field==='session') {
+      const sessions = typeof normalizedAcademicSessions==='function' ? normalizedAcademicSessions().map(s=>s.year) : (appState.classes||[]).map(c=>String(c.academicYear));
+      if(!sessions.includes(value)||!$('filter-academic-year'))return;
+      $('filter-academic-year').value=value;
+      if($('filter-kelas'))$('filter-kelas').value='ALL';
+    } else if(field==='year') {
+      if(!['ALL','4','5','6'].includes(value)||!$('filter-tahun'))return;
+      $('filter-tahun').value=value;
+      if($('filter-kelas'))$('filter-kelas').value='ALL';
+    } else if(field==='classId') {
+      if(value!=='ALL'&&!permittedClasses().some(c=>c.id===value))return;
+      if(!$('filter-kelas'))return;
+      $('filter-kelas').value=value;
+    } else return;
+    if(field!=='classId'&&typeof onTahunChange==='function')onTahunChange();
+    else if(typeof onFilterChange==='function')onFilterChange();
+    renderCompleteness();
   }
 
   function openCompletion(module,classId){
+    const cls = permittedClasses().find(c=>c.id===classId);
+    if (!cls) return;
+    const scope = {...completionScope()};
+    if ($('filter-tahun')) $('filter-tahun').value=String(cls.year);
+    if ($('filter-kelas')) $('filter-kelas').value=classId;
     navigateTab(module);
     setTimeout(()=>{
+      if(module==='pbd') {
+        if($('pbd-year')) $('pbd-year').value=String(cls.year);
+        if($('pbd-period')) $('pbd-period').value=scope.period;
+        if(typeof populatePbdMatrixClassOptions==='function')populatePbdMatrixClassOptions(classId);
+      }
       const select=$(module==='marks'?'filter-kelas':'pbd-class');
       if(select&&[...select.options].some(option=>option.value===classId)){
         select.value=classId;
         select.dispatchEvent(new Event('change',{bubbles:true}));
       }
+      if(module==='marks' && scope.assessmentType!=='ALL' && typeof selectMarksAssessmentType==='function')selectMarksAssessmentType(scope.assessmentType);
+      if(module==='pbd' && typeof renderPbdModule==='function')renderPbdModule();
     },0);
   }
 
@@ -186,6 +283,6 @@
     if(window.lucide)lucide.createIcons();
   }
 
-  window.iSejarahV66={runRollover,backup,render,printExecutive,openCompletion};
+  window.iSejarahV66={runRollover,backup,render,printExecutive,openCompletion,completionForClass,setCompletionScope,setCompletionContext};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
 })();
