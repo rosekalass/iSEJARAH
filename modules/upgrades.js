@@ -236,13 +236,141 @@
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`iSEJARAH_Backup_${ay()}_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);logAudit('FULL_BACKUP_EXPORT',{academicYear:ay(),schemaVersion:2});
   }
 
+  let executiveFilters = null;
+  function executiveScope() {
+    if (!executiveFilters) {
+      const ids = new Set(permittedClasses().flatMap(c => classStudents(c.id).map(s => s.id)));
+      const exam = ['UASA','UPSA','DIAGNOSTIK'].find(type => {
+        const exams = new Set((appState.assessments || []).filter(a => assessmentYear(a) === ay() && a.type === type && (!a.subject || String(a.subject).toUpperCase() === 'SEJARAH')).map(a => a.id));
+        return actualScores().some(s => ids.has(s.studentId) && exams.has(s.assessmentId) && completeScore(s));
+      }) || 'UPSA';
+      executiveFilters = {exam,period:exam === 'UASA' ? 'AKHIR' : 'PERTENGAHAN',year:'ALL',classId:'ALL'};
+    }
+    // A class selected in a different session or role must never remain as a hidden filter.
+    if (executiveFilters.classId !== 'ALL' && !permittedClasses().some(c=>c.id===executiveFilters.classId && (executiveFilters.year==='ALL'||String(c.year)===executiveFilters.year))) executiveFilters.classId='ALL';
+    return executiveFilters;
+  }
+  function executiveClasses() {
+    const scope = executiveScope();
+    return permittedClasses().filter(c => (scope.year === 'ALL' || String(c.year) === scope.year) && (scope.classId === 'ALL' || c.id === scope.classId));
+  }
+  function executiveMark(score,assessment) {
+    if (!completeScore(score) || score.absent) return null;
+    const supplied = score.percentage;
+    const maximum = Number(assessment?.maxScore || assessment?.totalMarks || 100);
+    if (!(maximum > 0) || Number(score.rawScore) > maximum) return null;
+    const value = supplied !== null && supplied !== undefined && String(supplied).trim() !== '' ? Number(supplied) : Number(score.rawScore) / maximum * 100;
+    return Number.isFinite(value) && value >= 0 && value <= 100 ? value : null;
+  }
+  function getExecutiveSnapshot() {
+    const scope = {...executiveScope()}, classes = executiveClasses(), ids = new Set(classes.flatMap(c => classStudents(c.id).map(s => s.id)));
+    const allMarks = [], allPoints = [], belowMarkIds = new Set(), lowPbdIds = new Set();
+    const progress = {enabled:scope.period==='AKHIR',improved:0,same:0,declined:0,reassessed:0,inherited:0,newFinal:0};
+    let mastered = 0, recordedPbd = 0, expectedPbd = 0, inheritedPbd = 0, pbdMastered = 0, absent = 0;
+    const classRows = classes.map(cls => {
+      const students = classStudents(cls.id);
+      const assessments = (appState.assessments || []).filter(a => a.classId === cls.id && assessmentYear(a) === ay() && a.type === scope.exam && (!a.subject || String(a.subject).toUpperCase() === 'SEJARAH'))
+        .sort((a,b) => typeof compareAssessmentsByExamDate === 'function' ? compareAssessmentsByExamDate(b,a) : String(b.date || b.createdAt || '').localeCompare(String(a.date || a.createdAt || '')));
+      const assessment = assessments[0], scoreMap = new Map();
+      if (assessment) actualScores().filter(s => s.assessmentId === assessment.id).forEach(s => { if (!scoreMap.has(s.studentId)) scoreMap.set(s.studentId,s); });
+      const marks = [], points = []; let classAbsent = 0, classMtm = 0;
+      students.forEach(student => {
+        const score = scoreMap.get(student.id);
+        if (score?.absent === true) { classAbsent++; return; }
+        const value = executiveMark(score,assessment); if (value === null) return;
+        const grade = typeof calculateGrade === 'function' ? calculateGrade(value) : null;
+        const point = typeof gradePointForGrade === 'function' ? gradePointForGrade(grade) : null;
+        marks.push(value); if (point !== null && Number.isFinite(point)) points.push(point);
+        if (['A','B','C','D','E'].includes(grade)) classMtm++;
+        if (value < 40) belowMarkIds.add(student.id);
+      });
+      const template = getPbdMatrixTemplate(Number(cls.year));
+      const dskp = [...new Map(template.groups.flatMap(group => group.topics.map((_,index) => pbdMatrixDskpForTopic(Number(cls.year),group.key,index))).filter(Boolean).map(d => [d.id,d])).values()];
+      let recorded = 0, inherited = 0, mastery = 0;
+      students.forEach(student => dskp.forEach(d => {
+        const record = getEffectivePbdMatrixRecord(student.id,d.id,scope.period,ay());
+        if (scope.period === 'AKHIR') {
+          const mid = getEffectivePbdMatrixRecord(student.id,d.id,'PERTENGAHAN',ay());
+          const final = (appState.pbdRecords || []).find(r=>r.studentId===student.id && r.dskpId===d.id && periodOf(r)==='AKHIR' && String(r.academicYear || ay())===ay());
+          if (validTp(final) && validTp(mid)) {progress.reassessed++;const delta=Number(final.tp)-Number(mid.tp);progress[delta>0?'improved':delta<0?'declined':'same']++;}
+          else if (validTp(final)) progress.newFinal++;
+        }
+        if (!validTp(record)) return;
+        recorded++; if (record.inherited) inherited++;
+        if (Number(record.tp) >= 3) mastery++; else lowPbdIds.add(student.id);
+      }));
+      const expected = students.length * dskp.length;
+      allMarks.push(...marks); allPoints.push(...points); mastered += classMtm; absent += classAbsent;
+      recordedPbd += recorded; expectedPbd += expected; inheritedPbd += inherited; pbdMastered += mastery;
+      return {id:cls.id,name:cls.name,year:Number(cls.year),students:students.length,assessmentMissing:!assessment,taken:marks.length,absent:classAbsent,expectedMarks:students.length,missingMarks:Math.max(0,students.length-marks.length-classAbsent),average:marks.length?marks.reduce((a,b)=>a+b,0)/marks.length:null,mtmPct:marks.length?classMtm/marks.length*100:null,gpmp:points.length?points.reduce((a,b)=>a+b,0)/points.length:null,pbdRecorded:recorded,pbdExpected:expected,pbdMissing:expected-recorded,pbdInherited:inherited,pbdMasteryPct:recorded?mastery/recorded*100:null};
+    });
+    const interventions = (appState.interventions || []).filter(r => ids.has(r.studentId) && String(r.academicYear || ay()) === ay() && r.status !== 'SELESAI');
+    const due = interventions.filter(r => typeof isInterventionDue === 'function' && isInterventionDue(r)).length;
+    const missingMarks = classRows.reduce((sum,r)=>sum+r.missingMarks,0), missingPbd = expectedPbd-recordedPbd, priorities = [];
+    if (missingMarks) priorities.push({title:'Sahkan data markah sebelum membuat rumusan',detail:`${missingMarks} daripada ${ids.size} murid belum mempunyai markah sah atau status TH untuk ${scope.exam}. Semak kelas yang belum lengkap.`,target:'completeness'});
+    if (belowMarkIds.size || lowPbdIds.size) priorities.push({title:'Rancang sokongan mengikut keperluan',detail:`${belowMarkIds.size} murid memperoleh markah di bawah 40%; ${lowPbdIds.size} murid mempunyai sekurang-kurangnya satu rekod SK di bawah TP3 dalam skop laporan. Kumpulan ini boleh bertindih. Murid Perhatian menggunakan purata dan trend keseluruhan, jadi senarainya mungkin berbeza.`,target:'attention'});
+    if (due) priorities.push({title:'Semak susulan intervensi yang telah sampai tarikh',detail:`${due} daripada ${interventions.length} intervensi aktif telah sampai atau melepasi tarikh semakan. Catat hasil dan tetapkan langkah seterusnya.`,target:'intervention'});
+    if (missingPbd) priorities.push({title:'Lengkapkan bukti pentaksiran PBD',detail:`${missingPbd} daripada ${expectedPbd} rekod SK belum diisi untuk tempoh yang dipilih. Penguasaan hanya mewakili ${recordedPbd} rekod yang berisi.`,target:'pbd'});
+    if (inheritedPbd) priorities.push({title:'Nilai semula rekod PBD yang diwarisi',detail:`${inheritedPbd} rekod Akhir Tahun menggunakan TP Pertengahan sebagai kesinambungan. Sahkan semula apabila bukti baharu tersedia.`,target:'pbd'});
+    if (!priorities.length) priorities.push({title:ids.size?'Teruskan pemantauan berjadual':'Pilih sesi atau kelas yang mempunyai murid aktif',detail:ids.size?'Tiada jurang data atau indikator sokongan di atas dikesan dalam skop ini. Semak analisis item untuk menentukan pengayaan seterusnya.':'Tiada murid aktif dalam skop pilihan. Keputusan prestasi tidak dikira.',target:ids.size?'item-analysis':'students'});
+    priorities.forEach(p=>{p.action=({completeness:`Semak murid tanpa markah atau TH bagi ${scope.exam}; sahkan rekod sebelum membentang.`,attention:`Padankan keputusan ${scope.exam} dengan purata dan trend keseluruhan di Murid Perhatian, kemudian pilih murid untuk bimbingan.`,intervention:'Buka rekod susulan, catat hasil semakan dan tetapkan tarikh tindakan berikutnya.',pbd:p.title.includes('diwarisi')?'Semak bukti baharu dan sahkan semula TP Akhir Tahun yang masih diwarisi.':'Isi TP berdasarkan bukti pentaksiran bagi SK yang belum direkodkan.', 'item-analysis':'Semak topik sukar dan pilih aktiviti pengayaan atau pengukuhan untuk pengajaran berikutnya.',students:'Semak senarai murid aktif dan pilihan sesi sebelum menjana laporan semula.'})[p.target];});
+    progress.inherited=inheritedPbd;
+    return {academicYear:ay(),exam:scope.exam,period:scope.period,scopeLabel:`Sesi ${ay()} · ${scope.classId !== 'ALL' ? classes[0]?.name || 'Kelas tidak tersedia' : scope.year !== 'ALL' ? 'Tahun '+scope.year : 'Semua Tahun'} · ${scope.exam} · PBD ${scope.period==='AKHIR'?'Akhir Tahun':'Pertengahan Tahun'}`,classes:classes.length,students:ids.size,taken:allMarks.length,absent,missingMarks,expectedMarks:ids.size,average:allMarks.length?allMarks.reduce((a,b)=>a+b,0)/allMarks.length:null,mtmPct:allMarks.length?mastered/allMarks.length*100:null,gpmp:allPoints.length?allPoints.reduce((a,b)=>a+b,0)/allPoints.length:null,pbd:{recorded:recordedPbd,expected:expectedPbd,missing:missingPbd,inherited:inheritedPbd,masteryPct:recordedPbd?pbdMastered/recordedPbd*100:null,belowTp3:lowPbdIds.size,progress},classRows,priorities,interventions:{active:interventions.length,due},below40:belowMarkIds.size};
+  }
+  function getAttentionSnapshot() {
+    return {academicYear:ay(),rows:attentionRows().map(r=>({name:r.student.name,className:(appState.classes||[]).find(c=>c.id===r.student.classId)?.name||'—',avgMark:r.avgMark,avgTp:r.avgTp,trend:r.trend,priority:r.priority,reasons:[...(r.reasons||[])]}))};
+  }
+  function setExecutiveScope(field,value) {
+    const scope = executiveScope();
+    if (field === 'session') {
+      const sessions = typeof normalizedAcademicSessions === 'function' ? normalizedAcademicSessions().map(s=>String(s.year)) : [...new Set((appState.classes||[]).map(c=>String(c.academicYear)))];
+      if (!sessions.includes(value) || !$('filter-academic-year')) return;
+      $('filter-academic-year').value=value; scope.classId='ALL';
+      // Update the shared selector without the entry-module initializer, which
+      // creates assessment templates. Viewing an archived report is read-only.
+      if ($('filter-kelas')) {
+        const year=$('filter-tahun')?.value || 'ALL';
+        $('filter-kelas').innerHTML='<option value="ALL">Semua Kelas</option>'+permittedClasses().filter(c=>year==='ALL'||String(c.year)===year).map(c=>`<option value="${safe(c.id)}">${safe(c.name)}</option>`).join('');
+        $('filter-kelas').value='ALL';
+      }
+    } else if (field === 'exam' && ['DIAGNOSTIK','UPSA','UASA'].includes(value)) scope.exam=value;
+    else if (field === 'period' && ['PERTENGAHAN','AKHIR'].includes(value)) scope.period=value;
+    else if (field === 'year' && ['ALL','4','5','6'].includes(value)) {scope.year=value;scope.classId='ALL';}
+    else if (field === 'classId' && (value === 'ALL' || permittedClasses().some(c=>c.id===value && (scope.year==='ALL'||String(c.year)===scope.year)))) scope.classId=value;
+    else return;
+    renderExecutive(); $('executive-'+field)?.focus({preventScroll:true});
+  }
+  function openExecutiveAction(target) {
+    const report=getExecutiveSnapshot(), scope=executiveScope();
+    if (!['completeness','attention','intervention','pbd','item-analysis','students'].includes(target)) return;
+    if (target === 'completeness') {completionScope().assessmentType=scope.exam;completionScope().period=scope.period;}
+    if ($('filter-tahun')) $('filter-tahun').value=scope.year;
+    if (typeof onTahunChange==='function') onTahunChange();
+    if ($('filter-kelas')) $('filter-kelas').value=scope.classId;
+    navigateTab(target);
+    if (target === 'pbd') {
+      if ($('pbd-period')) $('pbd-period').value=report.period;
+      if ($('pbd-year') && scope.year!=='ALL') $('pbd-year').value=scope.year;
+      if (typeof populatePbdMatrixClassOptions==='function') populatePbdMatrixClassOptions(scope.classId==='ALL'?null:scope.classId);
+      if (typeof renderPbdModule==='function') renderPbdModule();
+    }
+  }
   function renderExecutive() {
-    const classes=permittedClasses(), ids=new Set(classes.flatMap(c=>classStudents(c.id).map(s=>s.id))), scores=actualScores().filter(s=>ids.has(s.studentId)), marks=scores.map(pct), average=marks.length?marks.reduce((a,b)=>a+b,0)/marks.length:0, pass=marks.length?marks.filter(x=>x>=40).length/marks.length*100:0, pbd=(appState.pbdOverall||[]).filter(r=>ids.has(r.studentId)&&String(r.academicYear||ay())===ay()), mastery=pbd.length?pbd.filter(r=>Number(r.overallTP||r.tp)>=3).length/pbd.length*100:0, attention=attentionRows(), interventions=(appState.interventions||[]).filter(r=>ids.has(r.studentId)&&String(r.academicYear||ay())===ay()), progress=pbdProgress();
-    const improved=progress.filter(x=>x.delta>0).length, same=progress.filter(x=>x.delta===0).length, declined=progress.filter(x=>x.delta<0).length, inherited=progress.filter(x=>x.inherited).length;
-    $('executive-report-content').innerHTML=`<div id="executive-print"><div class="report-cover"><p>PANITIA SEJARAH</p><h2>Laporan Prestasi Eksekutif</h2><span>Sesi ${safe(ay())} · Dijana ${safe(new Date().toLocaleDateString('ms-MY'))}</span></div><div class="upgrade-grid kpis">${card('Purata Markah',average.toFixed(1)+'%',scores.length+' rekod','blue')}${card('Lulus',pass.toFixed(1)+'%','Ambang 40%','mint')}${card('Penguasaan PBD',mastery.toFixed(1)+'%','TP3–TP6','lilac')}${card('Intervensi',interventions.length,attention.length+' murid perhatian','peach')}</div><div class="upgrade-grid admin-columns"><div class="upgrade-panel"><div class="panel-title"><h2>Progress PBD</h2><span>Pertengahan → Akhir</span></div><div class="pbd-progress-summary"><b class="up">↑ ${improved} meningkat</b><b>→ ${same} kekal</b><b class="down">↓ ${declined} menurun</b></div><p class="inherited-note">${inherited} rekod Akhir Tahun masih memaparkan data diwarisi daripada Pertengahan dan belum dinilai semula.</p></div><div class="upgrade-panel"><div class="panel-title"><h2>Insight Panitia</h2><span>Berpandukan data</span></div><ul class="insight-list"><li>${classes.length} kelas aktif dengan ${ids.size} murid.</li><li>${attention.filter(r=>r.priority==='HIGH').length} murid memerlukan tindakan keutamaan tinggi.</li><li>${interventions.filter(isInterventionDue).length} susulan intervensi telah sampai atau melepasi tarikh semakan.</li></ul></div></div></div><button class="primary-action" onclick="iSejarahV66.printExecutive()">Cetak / Simpan PDF</button>`;
+    const scope=executiveScope(), d=getExecutiveSnapshot(), percent=value=>value===null?'—':value.toFixed(1)+'%', sessions=typeof normalizedAcademicSessions==='function'?normalizedAcademicSessions():[{year:ay(),label:ay()}];
+    const options=(list,value)=>list.map(([id,label])=>`<option value="${safe(id)}" ${String(id)===String(value)?'selected':''}>${safe(label)}</option>`).join('');
+    $('executive-report-content').innerHTML=`<section class="executive-purpose" aria-labelledby="executive-purpose-title"><div><p class="executive-eyebrow">Untuk mesyuarat & keputusan panitia</p><h2 id="executive-purpose-title">Apa yang telah dicapai, dan apa tindakan seterusnya?</h2><p>Gunakan laporan ini sebagai ringkasan pembentangan: semak prestasi satu ujian, kenal pasti jurang PBD dan bawa tindakan susulan ke mesyuarat. Pilihan di bawah menentukan semua angka dalam laporan.</p></div><div id="executive-print-actions"></div></section>
+      <section class="executive-scope" aria-label="Skop laporan eksekutif"><label for="executive-session">Sesi<select id="executive-session" onchange="iSejarahV66.setExecutiveScope('session',this.value)">${options(sessions.map(s=>[s.year,s.label||s.year]),ay())}</select></label><label for="executive-year">Tahun<select id="executive-year" onchange="iSejarahV66.setExecutiveScope('year',this.value)">${options([['ALL','Semua Tahun'],['4','Tahun 4'],['5','Tahun 5'],['6','Tahun 6']],scope.year)}</select></label><label for="executive-classId">Kelas<select id="executive-classId" onchange="iSejarahV66.setExecutiveScope('classId',this.value)">${options([['ALL','Semua kelas dibenarkan'],...permittedClasses().filter(c=>scope.year==='ALL'||String(c.year)===scope.year).map(c=>[c.id,c.name])],scope.classId)}</select></label><label for="executive-exam">Ujian<select id="executive-exam" onchange="iSejarahV66.setExecutiveScope('exam',this.value)">${options([['DIAGNOSTIK','Diagnostik'],['UPSA','UPSA'],['UASA','UASA']],scope.exam)}</select></label><label for="executive-period">Tempoh PBD<select id="executive-period" onchange="iSejarahV66.setExecutiveScope('period',this.value)">${options([['PERTENGAHAN','Pertengahan Tahun'],['AKHIR','Akhir Tahun']],scope.period)}</select></label></section>
+      <div id="executive-print"><div class="executive-context"><strong>${safe(d.scopeLabel)}</strong><span>${d.classes} kelas · ${d.students} murid aktif · Dijana ${safe(new Date().toLocaleString('ms-MY'))}</span></div>
+      <div class="executive-kpis">${card('Purata '+d.exam,percent(d.average),d.taken+' murid bermarkah sah','blue')}${card('MTM · Gred A–E',percent(d.mtmPct),'TH dan markah kosong dikecualikan','mint')}${card('GPMP',d.gpmp===null?'—':d.gpmp.toFixed(2),'Lebih rendah = lebih baik','lilac')}${card('Penguasaan SK PBD',percent(d.pbd.masteryPct),d.pbd.recorded+' rekod berisi · TP3–TP6','peach')}</div>
+      <section class="executive-quality" aria-labelledby="executive-quality-title"><h2 id="executive-quality-title">Semak liputan sebelum membuat keputusan</h2><div class="executive-quality-grid"><p><strong>${d.taken} bermarkah · ${d.absent} TH · ${d.missingMarks} belum lengkap</strong><span>${d.expectedMarks} murid dijangka untuk ${safe(d.exam)}. TH dikira sebagai status berisi, dan dikecualikan daripada purata, MTM dan GPMP.</span></p><p><strong>${d.pbd.recorded} / ${d.pbd.expected} rekod SK PBD berisi</strong><span>${d.pbd.missing} belum diisi${d.period==='AKHIR'?' · '+d.pbd.inherited+' diwarisi daripada Pertengahan':''}. Penguasaan ialah peratus rekod berisi yang mencapai TP3, bukan peratus semua murid.</span></p></div></section>
+      ${d.pbd.progress.enabled?`<section class="executive-section" aria-labelledby="executive-progress-title"><div class="executive-section-heading"><h2 id="executive-progress-title">Perubahan PBD: Pertengahan → Akhir</h2><span>${d.pbd.progress.reassessed} rekod SK dinilai semula dan boleh dibandingkan</span></div><div class="executive-progress"><p><strong>${d.pbd.progress.improved}</strong><span>Meningkat</span></p><p><strong>${d.pbd.progress.same}</strong><span>Kekal selepas penilaian semula</span></p><p><strong>${d.pbd.progress.declined}</strong><span>Menurun</span></p></div><p class="executive-method">Perbandingan hanya menggunakan rekod SK dengan TP Pertengahan dan TP Akhir yang diisi secara berasingan. ${d.pbd.progress.inherited} rekod diwarisi tidak dianggap sebagai penilaian baharu atau “kekal”. ${d.pbd.progress.newFinal} rekod Akhir tanpa TP Pertengahan tidak dibandingkan.</p></section>`:''}
+      <section class="executive-section" aria-labelledby="executive-classes-title"><div class="executive-section-heading"><h2 id="executive-classes-title">Prestasi mengikut kelas</h2><span>Ujian terkini bagi jenis yang dipilih dalam setiap kelas</span></div><div class="executive-table-scroll" tabindex="0" role="region" aria-label="Ringkasan prestasi kelas; leret untuk melihat semua lajur"><table class="executive-table" id="executive-class-table"><caption class="sr-only">Prestasi markah dan PBD dalam skop laporan</caption><thead><tr><th scope="col">Kelas</th><th scope="col">Murid</th><th scope="col">Bermarkah / TH</th><th scope="col">Purata</th><th scope="col">MTM</th><th scope="col">GPMP</th><th scope="col">Markah belum lengkap</th><th scope="col">SK PBD berisi</th><th scope="col">Penguasaan SK</th></tr></thead><tbody>${d.classRows.length?d.classRows.map(r=>`<tr><th scope="row">${safe(r.name)}</th><td>${r.students}</td><td>${r.taken} / ${r.absent}</td><td>${percent(r.average)}</td><td>${percent(r.mtmPct)}</td><td>${r.gpmp===null?'—':r.gpmp.toFixed(2)}</td><td>${r.missingMarks}${r.assessmentMissing?'<small>Ujian belum diwujudkan</small>':''}</td><td>${r.pbdRecorded} / ${r.pbdExpected}</td><td>${percent(r.pbdMasteryPct)}</td></tr>`).join(''):'<tr><td colspan="9">Tiada kelas atau murid aktif dalam skop ini.</td></tr>'}</tbody></table></div></section>
+      <section class="executive-section" aria-labelledby="executive-actions-title"><div class="executive-section-heading"><h2 id="executive-actions-title">Agenda tindakan susulan</h2><span>${d.interventions.active} intervensi aktif · ${d.interventions.due} perlu semakan</span></div><ol class="executive-priorities">${d.priorities.map((p,i)=>`<li><span class="executive-step" aria-hidden="true">${i+1}</span><div><h3>${safe(p.title)}</h3><p>${safe(p.detail)}</p></div><button type="button" onclick="iSejarahV66.openExecutiveAction('${p.target}')">Semak <span class="sr-only">${safe(p.title)}</span>→</button></li>`).join('')}</ol><p class="executive-method">Cadangan di atas dijana daripada data dalam skop. Tetapkan pegawai bertanggungjawab, tarikh sasaran dan keputusan dalam minit mesyuarat. Laporan ini tidak mengubah rekod atau mencipta intervensi secara automatik.</p></section></div>`;
+    window.iSejarahPresentationPrint?.install();
   }
 
   function printExecutive() {
+    if(window.iSejarahPresentationPrint) return window.iSejarahPresentationPrint.open('executive');
     const report=$('executive-print');
     if(!report){showAlert('Tiada Paparan','Jana Laporan Eksekutif dahulu.','info');return;}
     const win=window.open('','_blank','width=1100,height=850');
@@ -283,6 +411,6 @@
     if(window.lucide)lucide.createIcons();
   }
 
-  window.iSejarahV66={runRollover,backup,render,printExecutive,openCompletion,completionForClass,setCompletionScope,setCompletionContext};
+  window.iSejarahV66={runRollover,backup,render,printExecutive,openCompletion,completionForClass,setCompletionScope,setCompletionContext,getExecutiveSnapshot,getAttentionSnapshot,setExecutiveScope,openExecutiveAction};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});else initialize();
 })();
