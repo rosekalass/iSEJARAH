@@ -1,5 +1,5 @@
 /* Isolated landscape presentation preview and print document. */
-.presentation-print-trigger{background:#eee8fb!important;border:1px solid #cdbfe6!important;color:#49356d!important;font-weight:750!important;min-height:42px;white-space:normal}
+.presentation-print-trigger{background:#eee8fb!important;border:1px solid #cdbfe6!important;color:#49356d!important;font-size:13px!important;line-height:1.4!important;font-weight:750!important;min-height:44px;padding:10px 14px!important;white-space:normal}
 .presentation-print-trigger:hover{background:#e3d8f5!important}
 .presentation-print-actions-row{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .presentation-print-trigger:focus-visible,.presentation-print-dialog button:focus-visible,.presentation-print-dialog select:focus-visible{outline:3px solid #9066be;outline-offset:3px}
@@ -70,6 +70,7 @@
 .ps-attention strong{display:block;font-size:11px;line-height:1.4;color:#263c61}
 .ps-attention span{display:block;font-size:9px;line-height:1.5;margin-top:3px;color:#66738a}
 .ps-empty{display:flex;align-items:center;justify-content:center;min-height:110px;margin:0;font-size:13px;line-height:1.5;color:#66738a;text-align:center}
+.ps-table td.ps-empty-cell{display:table-cell;height:110px;padding:24px;text-align:center;vertical-align:middle;font-size:13px;line-height:1.6;color:#536179;overflow-wrap:normal;word-break:normal;background:#faf9fc}
 .ps-grade-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:15px}
 .ps-grade-list>div{display:grid;grid-template-columns:1fr auto;gap:2px 5px;min-height:55px;padding:8px 10px;background:#f4f1f9;border:1px solid #e6deef;border-radius:8px;font-size:11px;line-height:1.5;color:#3f4e6b;text-align:left;font-weight:700}
 .ps-grade-list b{grid-row:1;grid-column:1;font-size:15px}.ps-grade-list span{grid-row:2;grid-column:1;font-size:9px}.ps-grade-list strong{grid-row:1;grid-column:2;font-size:11px;text-align:right}.ps-grade-list small{grid-row:2;grid-column:2;font-size:9px;text-align:right}
@@ -110,6 +111,40 @@
 .ps-table-support td:nth-child(4),.ps-table-near-miss td:nth-child(4){text-align:left}
 .ps-table-class-overview .ps-name{width:190px}
 .ps-table-class-overview th:nth-child(3){width:240px}
+.ps-three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.ps-comparative-insights{margin:22px 0 18px;min-height:190px}
+.ps-comparative-insights .ps-panel{padding:24px 20px}
+.ps-comparative-insights h3{font-size:21px;margin:18px 0 14px;line-height:1.35}
+.ps-purpose{padding:25px 28px;margin-top:24px}
+.ps-purpose h3{font-size:20px;margin:0 0 16px}
+.ps-purpose p{font-size:15px;line-height:1.65;margin:12px 0;color:#46556c}
+.ps-purpose .ps-note{font-size:12px;color:#59677c}
+.ps-table-comparative th:first-child{width:34px}
+.ps-table-comparative .ps-name{width:210px}
+.ps-table-comparative th:nth-child(3){width:220px}
+.ps-table-attention .ps-name,.ps-table-item-support .ps-name{width:260px}
+.ps-table-attention th:last-child{width:260px}
+.ps-table-attention th:nth-child(2){width:140px}
+.ps-table-attention th:nth-child(6){width:140px}
+.ps-table-executive-classes .ps-name,.ps-table-executive-pbd .ps-name{width:230px}
+.ps-table-executive-actions th:first-child{width:210px}
+.ps-table-executive-actions td:nth-child(n+2){text-align:left}
+.ps-table-item-topics th:first-child{width:60px}
+.ps-table-item-topics .ps-name{width:280px}
+.ps-table-item-results th:first-child{width:58px}
+.ps-table-item-results .ps-name{width:260px}
+.ps-table-item-results th:last-child{width:250px}
+.ps-table-item-results td:last-child{text-align:left}
+.ps-table-item-mapping th:first-child{width:55px}
+.ps-table-item-mapping th:nth-child(2){width:45px}
+.ps-table-item-mapping th:nth-child(3){width:55px}
+.ps-table-item-mapping .ps-name{width:225px}
+.ps-table-item-mapping th:nth-child(7){width:250px}
+.ps-table-item-mapping td:nth-child(7){text-align:left}
+.ps-table-jsi-matrix th:first-child{width:65px}
+.ps-table-jsi-matrix .ps-name{width:300px}
+.ps-table-jsi-matrix th:last-child{width:100px}
+.ps-table-jsi-matrix tbody tr:last-child{background:#e6e0f3;font-weight:750}
 .ps-document[data-format="a4"] .ps-deck{width:1122.52px}
 .ps-document[data-format="a4"] .ps-slide{width:1122.52px;height:793.7px;padding:32px 34px 22px}
 .ps-document[data-format="a4"] .ps-header h1{font-size:24px}
