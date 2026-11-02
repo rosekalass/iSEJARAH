@@ -10382,7 +10382,7 @@
                     <div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">${title}</p><p class="font-extrabold text-slate-800 mt-0.5 truncate">${value}</p><p class="text-[10px] text-slate-500 mt-1">${desc}</p></div>
                 </div>`;
             insights.innerHTML =
-                insightCard('trophy','GPMP Tertinggi', bestAvg?.className || 'Belum cukup data', bestAvg ? `${formatWholePercent(bestAvg.average)} berdasarkan ${bestAvg.markDataStudents} murid dengan markah` : 'Tiada markah tersedia', 'bg-amber-50 text-amber-600') +
+                insightCard('trophy','Purata Markah Tertinggi', bestAvg?.className || 'Belum cukup data', bestAvg ? `${formatWholePercent(bestAvg.average)} berdasarkan ${bestAvg.markDataStudents} murid dengan markah` : 'Tiada markah tersedia', 'bg-amber-50 text-amber-600') +
                 insightCard('clipboard-check','PBD Paling Lengkap', bestPbd?.className || 'Belum cukup data', bestPbd ? `${formatWholePercent(bestPbd.pbdCompletion)} lengkap` : 'Tiada rekod PBD tersedia', 'bg-emerald-50 text-emerald-600') +
                 insightCard('heart-handshake','Perlu Perhatian', support?.className || 'Tiada kelas ditanda', support ? `${support.interventionCount} intervensi aktif · ${support.average===null?'tiada markah':formatWholePercent(support.average)+' purata'}` : 'Tiada data yang memerlukan perhatian', 'bg-rose-50 text-rose-600');
         }
