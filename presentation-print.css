@@ -1,6 +1,7 @@
 /* Isolated landscape presentation preview and print document. */
 .presentation-print-trigger{background:#eee8fb!important;border:1px solid #cdbfe6!important;color:#49356d!important;font-weight:750!important;min-height:42px;white-space:normal}
 .presentation-print-trigger:hover{background:#e3d8f5!important}
+.presentation-print-actions-row{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .presentation-print-trigger:focus-visible,.presentation-print-dialog button:focus-visible,.presentation-print-dialog select:focus-visible{outline:3px solid #9066be;outline-offset:3px}
 .presentation-print-dialog{box-sizing:border-box;width:min(1500px,96vw);max-width:96vw;height:min(980px,94dvh);max-height:94dvh;margin:auto;padding:0;border:1px solid #d6cce8;border-radius:18px;background:#f7f5fb;color:#273653;box-shadow:0 24px 90px #17213f38;overflow:hidden;font-family:Arial,Helvetica,sans-serif}
 .presentation-print-dialog::backdrop{background:#1f294c88;backdrop-filter:blur(3px)}
@@ -22,7 +23,8 @@
    App utility/theme rules do not enter that document. */
 .ps-document{margin:0;padding:0;background:#eae8f0;color:#273653;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.4;color-scheme:light}
 .ps-document *{box-sizing:border-box}
-.ps-deck{width:1280px;margin:0 auto;padding:24px 0;zoom:var(--ps-preview-scale,1)}
+.ps-preview-viewport{position:relative;width:100%;overflow:hidden}
+.ps-deck{position:absolute;top:0;left:0;width:1280px;margin:0;padding:24px 0;transform:scale(var(--ps-preview-scale,1));transform-origin:top left}
 .ps-slide{display:flex;flex-direction:column;width:1280px;height:720px;background:#fff;margin:0 0 24px;padding:30px 38px 20px;border:1px solid #dfdbe7;box-shadow:0 8px 28px #29365618;overflow:visible;break-after:page;page-break-after:always}
 .ps-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;min-height:105px;padding-bottom:16px;border-bottom:2px solid #c8dcd7;flex-shrink:0}
 .ps-header h1{margin:4px 0 5px;font-size:26px;line-height:1.15;letter-spacing:-.02em;color:#243653;font-weight:750;max-width:900px}
@@ -88,16 +90,40 @@
 .ps-table td.ps-tp-1{background:#fce4eb;color:#8b2547}.ps-table td.ps-tp-2{background:#fdebdc;color:#905129}.ps-table td.ps-tp-3{background:#e3effc;color:#245c87}.ps-table td.ps-tp-4{background:#dff3eb;color:#24634d}.ps-table td.ps-tp-5,.ps-table td.ps-tp-6{background:#ece4f9;color:#63478b}
 .ps-table-sk th:nth-child(1){width:115px}.ps-table-sk th:nth-child(2){width:280px}.ps-table-sk th:nth-child(3){width:200px}.ps-table-sk th:last-child{width:145px}
 .ps-table-sk td:nth-child(2),.ps-table-sk td:nth-child(3){text-align:left}
+.ps-kpis-wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.ps-kpis-wrap .ps-kpi{padding:12px;min-height:90px}
+.ps-marks-summary{height:205px}
+.ps-marks-comparison{height:425px}
+.ps-marks-summary .ps-value{margin-top:12px}
+.ps-marks-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.ps-marks-status .ps-value{display:block}
+.ps-marks-status .ps-value strong{display:block;margin-top:12px}
+.ps-insight-list{padding-left:22px;margin:8px 0;font-size:14px;line-height:1.65;color:#3f4e6b}
+.ps-insight-list li{padding:10px 0;border-bottom:1px solid #e5e8ef}
+.ps-dashboard-gpmp{height:445px;grid-template-columns:1.15fr 1fr}
+.ps-dashboard-gpmp .ps-table{font-size:10px}
+.ps-dashboard-gpmp .ps-table :is(th,td){padding:9px 6px}
+.ps-table-marks-students th:first-child,.ps-table-support th:first-child,.ps-table-near-miss th:first-child{width:38px}
+.ps-table-marks-students .ps-name,.ps-table-support .ps-name,.ps-table-near-miss .ps-name{width:250px}
+.ps-table-marks-students th:nth-child(3){width:165px}
+.ps-table-support th:nth-child(4),.ps-table-near-miss th:nth-child(4){width:270px}
+.ps-table-support td:nth-child(4),.ps-table-near-miss td:nth-child(4){text-align:left}
+.ps-table-class-overview .ps-name{width:190px}
+.ps-table-class-overview th:nth-child(3){width:240px}
 .ps-document[data-format="a4"] .ps-deck{width:1122.52px}
 .ps-document[data-format="a4"] .ps-slide{width:1122.52px;height:793.7px;padding:32px 34px 22px}
 .ps-document[data-format="a4"] .ps-header h1{font-size:24px}
 .ps-document[data-format="a4"] .ps-summary-charts{height:360px}
 .ps-document[data-format="a4"] .ps-grade-charts{height:420px}
+.ps-document[data-format="a4"] .ps-marks-summary{height:245px}
+.ps-document[data-format="a4"] .ps-dashboard-gpmp{grid-template-columns:1fr 1fr;height:490px}
+.ps-document[data-format="a4"] :is(.ps-table-support,.ps-table-near-miss) th:nth-child(4){width:230px}
 .ps-document[data-format="a4"] .ps-table-students .ps-name{width:195px}
 .ps-document[data-format="a4"] .ps-table-sk th:nth-child(2){width:245px}.ps-document[data-format="a4"] .ps-table-sk th:nth-child(3){width:160px}
 @media print{
   html,body.ps-document{margin:0!important;padding:0!important;background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .ps-deck{padding:0!important;margin:0!important;zoom:1!important}
+  .ps-preview-viewport{height:auto!important;overflow:visible!important}
+  .ps-deck{position:static!important;left:auto!important;transform:none!important;padding:0!important;margin:0!important;zoom:1!important}
   .ps-slide{margin:0!important;border:0!important;box-shadow:none!important;break-after:page;page-break-after:always}
   .ps-slide:last-child{break-after:auto;page-break-after:auto}
   .presentation-print-dialog{display:none!important}
