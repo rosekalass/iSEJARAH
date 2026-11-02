@@ -36,7 +36,7 @@
     return result;
   }
 
-  function chartImage(canvasId, label) {
+  function chartImage(canvasId, label, settings={}) {
     const source = $(canvasId);
     if (!source) return {label, url:''};
     let canvas = null, instance = null;
@@ -52,6 +52,8 @@
         options.color = '#46536b';
         options.plugins = options.plugins || {};
         options.plugins.legend = {...(options.plugins.legend || {}), labels:{...(options.plugins.legend?.labels || {}), color:'#46536b', font:{size:15}}};
+        if(settings.legendPosition)options.plugins.legend.position=settings.legendPosition;
+        if(settings.legendFontSize)options.plugins.legend.labels.font.size=settings.legendFontSize;
         options.plugins.title = {...(options.plugins.title || {}), color:'#273653'};
         Object.values(options.scales || {}).forEach(scale => {
           if (!scale || typeof scale !== 'object') return;
@@ -155,9 +157,88 @@
     return output;
   }
 
+  function dataTable(headers, rows, kind, nameColumn=1) {
+    const table=node('table',`ps-table ps-table-${kind}`),head=node('thead'),heading=node('tr'),body=node('tbody');
+    headers.forEach((label,index)=>{const th=node('th',index===nameColumn?'ps-name':'',label);th.scope='col';heading.appendChild(th);});
+    head.appendChild(heading);table.append(head,body);
+    rows.forEach(values=>{const tr=node('tr');values.forEach((value,index)=>tr.appendChild(node('td',index===nameColumn?'ps-name':'',plain(value)||'—')));body.appendChild(tr);});
+    return table;
+  }
+
+  function marksGradeCardsHtml() {
+    return Array.from($('grade-percentage-cards')?.children || []).map(card=>{
+      const heading=card.firstElementChild;
+      return `<div><b>${escape(cleanText(heading?.children[0]))}</b><span>${escape(cleanText(card.lastElementChild))}</span><strong>${escape(cleanText(heading?.children[1]))}</strong><small>${escape(cleanText(card.querySelector('.analytics-percent')))}</small></div>`;
+    }).join('');
+  }
+
+  function marksCandidateTable(nearMiss=false) {
+    // These are the already authorized/scoped rows used by the visible analytics.
+    // Screen cards cap at 9/12; print the complete candidate list without changing filters.
+    const rows=typeof analyticsCurrentRows!=='undefined' && Array.isArray(analyticsCurrentRows) ? analyticsCurrentRows : [];
+    if(nearMiss) {
+      const candidates=rows.map(row=>({row,info:typeof analyticsNearMissInfo==='function'?analyticsNearMissInfo(row):{nearMiss:false}}))
+        .filter(x=>x.info.nearMiss).sort((a,b)=>a.info.gap-b.info.gap||String(a.row.student?.name||'').localeCompare(String(b.row.student?.name||''),'ms'));
+      return dataTable(['Bil','Nama Murid','Kelas','Pentaksiran','Markah','Gred → Sasaran','Jurang'],candidates.map(({row:r,info},i)=>[
+        i+1,r.student?.name,r.cls?.name,r.assessment?.name,`${Math.round(info.value)}%`,`${info.currentGrade} → ${info.targetGrade}`,`${info.gap} markah`
+      ]),'near-miss');
+    }
+    const candidates=rows.filter(r=>typeof analyticsRowStatus==='function' && analyticsRowStatus(r)==='SOKONGAN').sort((a,b)=>Number(a.score.percentage)-Number(b.score.percentage));
+    return dataTable(['Bil','Nama Murid','Kelas','Pentaksiran','Markah','Gred'],candidates.map((r,i)=>[
+      i+1,r.student?.name,r.cls?.name,r.assessment?.name,`${Math.round(Number(r.score.percentage))}%`,r.score.grade
+    ]),'support');
+  }
+
+  function collectDashboard() {
+    const slides=[{section:'Dashboard',title:'Ringkasan prestasi Sejarah',html:kpiHtml([
+      kpi('Jumlah Murid',text('kpi-total-students'),text('kpi-total-classes')),
+      kpi('Purata Markah',text('kpi-avg-marks'),text('kpi-avg-grade')),
+      kpi('Menguasai',text('kpi-mastery'),text('kpi-mastery-count')),
+      kpi('TP Dominan',text('kpi-dominant-tp')),
+      kpi('Perlu Intervensi',text('kpi-intervention'),'Bawah TP3 / Gred E–F'),
+      kpi('PBD Belum Lengkap',text('kpi-pbd-pending'),text('kpi-pbd-pending-count'))
+    ])+`<div class="ps-two-col ps-summary-charts">${figureHtml(chartImage('chart-grades','Taburan Gred Markah Sejarah'))}${figureHtml(chartImage('chart-tp','Taburan Tahap Penguasaan TP1–TP6',{legendPosition:'bottom',legendFontSize:20}))}</div>`}];
+    const gpmpScope=[selected('filter-academic-year'),text('dashboard-gpmp-chart-scope')||selected('dashboard-gpmp-year')].filter(Boolean).join(' · ');
+    slides.push({section:'GPMP Dashboard',title:'Perbandingan trend GPMP Headcount',scope:gpmpScope,html:`<div class="ps-two-col ps-dashboard-gpmp">${figureHtml(chartImage('dashboard-gpmp-chart','Sasaran dan pencapaian GPMP'))}<section class="ps-panel"><h3>Ringkasan GPMP</h3>${tableSnapshot($('dashboard-gpmp-table'),{kind:'gpmp'})?.outerHTML||'<p class="ps-empty">Belum ada data GPMP.</p>'}<p class="ps-note">GPMP lebih rendah menunjukkan pencapaian lebih baik. TH dan rekod kosong dikecualikan. Sasaran sama seperti Headcount Sejarah.</p></section></div>`});
+    slides.push({section:'Status Kelas',title:'Status pengisian dan purata kelas Sejarah',table:tableSnapshot($('dashboard-class-overview-table'),{omit:[7],nameColumn:0,kind:'class-overview'}),note:'Kelas dalam skop Dashboard semasa. Nilai disalin daripada paparan ringkasan kelas.'});
+    return slides;
+  }
+
+  function collectMarks() {
+    const kpis=[kpi('Jumlah Murid',text('an-kpi-total')),kpi('Markah Diisi',text('an-kpi-filled')),kpi('Purata',text('an-kpi-average')),kpi('Median',text('an-kpi-median')),kpi('Tertinggi',text('an-kpi-high')),kpi('Terendah',text('an-kpi-low')),kpi('Menguasai',text('an-kpi-mastery')),kpi('Tidak Hadir',text('an-kpi-absent'))];
+    const summary=kpiHtml(kpis).replace('class="ps-kpis"','class="ps-kpis ps-kpis-wrap"');
+    const insights=Array.from($('analytics-insights')?.children||[]).map(item=>cleanText(item.querySelector('span'))||cleanText(item));
+    const compareStats=Array.from($('analytics-comparison-stats')?.children||[]).map(item=>{
+      const parts=item.querySelectorAll('p');return parts.length>1?valueHtml(cleanText(parts[1]),cleanText(parts[0])):`<p class="ps-note">${escape(cleanText(item))}</p>`;
+    }).join('');
+    const comparisonActive=$('analytics-assessment-b')?.value && $('analytics-assessment-b').value!=='NONE';
+    const localScope=[selected('analytics-student-year-filter'),selected('analytics-student-class-filter'),selected('analytics-grade-filter'),selected('analytics-status-filter'),$('analytics-search')?.value?`Carian: ${$('analytics-search').value}`:''].filter(Boolean).join(' · ');
+    return [
+      {section:'Analisis Markah',title:'Ringkasan pencapaian markah',html:summary+`<div class="ps-two-col ps-marks-summary"><section class="ps-panel"><h3>GPMP Keseluruhan</h3>${valueHtml('GPMP',text('an-kpi-gpmp'),'Lebih rendah menunjukkan prestasi lebih baik')}<p class="ps-note">${escape(text('an-gpmp-basis'))}</p></section><section class="ps-panel"><h3>Status Pengisian · ${escape(text('an-completion-label'))}</h3><div class="ps-marks-status">${valueHtml('Diisi',text('an-complete-filled'))}${valueHtml('Belum diisi',text('an-complete-missing'))}${valueHtml('Tidak Hadir',text('an-complete-absent'))}</div></section></div>`},
+      {section:'Analisis Gred Markah',title:'Peratusan gred markah',html:`<div class="ps-two-col ps-pbd-charts"><section class="ps-panel"><h3>Gred dan peratusan calon</h3><div class="ps-grade-list">${marksGradeCardsHtml()}</div><p class="ps-note">${escape(text('grade-percentage-valid-count'))}. Peratus dikira daripada calon bermarkah sah; TH dikecualikan.</p></section>${figureHtml(chartImage('analytics-grade-chart','Peratusan calon mengikut gred'))}</div>`},
+      {section:'Julat Skor & Insight',title:'Taburan skor dan insight prestasi',html:`<div class="ps-two-col ps-pbd-charts">${figureHtml(chartImage('analytics-band-chart','Taburan julat skor'))}<section class="ps-panel"><h3>Insight Prestasi</h3><ul class="ps-insight-list">${insights.map(item=>`<li>${escape(item)}</li>`).join('')||'<li>Belum ada insight untuk skop ini.</li>'}</ul></section></div>`},
+      {section:'GPMP Mengikut Kelas',title:'GPMP kelas dalam skop analisis',table:tableSnapshot($('gpmp-class-table'),{nameColumn:0,kind:'gpmp'}),note:'Berdasarkan jenis ujian dipilih; TH dan markah kosong dikecualikan.'},
+      {section:'GPMP Mengikut Tahun',title:'GPMP mengikut Tahun 4, 5 dan 6',table:tableSnapshot($('gpmp-year-table'),{kind:'gpmp'}),note:'Gabungan kelas yang termasuk dalam skop analisis semasa.'},
+      {section:'Perbandingan Pentaksiran',title:'Perbandingan prestasi pentaksiran',note:text('analytics-comparison-subtitle'),html:comparisonActive?`<div class="ps-two-col ps-trend-layout ps-marks-comparison">${figureHtml(chartImage('analytics-compare-chart','Purata pentaksiran yang dibandingkan'))}<section class="ps-panel"><h3>Perubahan Prestasi</h3>${compareStats}</section></div>`:'<div class="ps-empty">Tiada perbandingan aktif. Pilih “Banding Dengan” dalam Analisis Markah untuk mencetak perbandingan pentaksiran.</div>'},
+      {section:'Prestasi Individu',title:'Prestasi individu murid',table:tableSnapshot($('analytics-student-table'),{nameColumn:1,kind:'marks-students'}),note:`${text('analytics-table-subtitle')} · ${localScope}`},
+      {section:'Murid Memerlukan Sokongan',title:'Senarai murid yang memerlukan sokongan',table:marksCandidateTable(false),note:`Julat sokongan 0–${text('analytics-threshold-label')||'39%'} · Senarai penuh dalam skop analisis; penapis tempatan jadual murid tidak digunakan pada senarai ini.`},
+      {section:'Calon Near Miss',title:'Calon Near Miss dan sasaran gred',table:marksCandidateTable(true),note:`Margin ${text('analytics-nearmiss-margin')||'5'} markah daripada gred lebih baik. Senarai penuh dalam skop analisis; penapis tempatan jadual murid tidak digunakan pada senarai ini.`}
+    ];
+  }
+
   function scopeFor(kind) {
     const school=text('topbar-school-name') || text('sidebar-school-name') || 'Panitia Sejarah';
     const date=new Date().toLocaleString('ms-MY',{dateStyle:'medium',timeStyle:'short'});
+    if(kind==='dashboard')return {
+      school,date,title:'Dashboard Prestasi Panitia Sejarah',
+      scope:[selected('filter-academic-year'),selected('filter-tahun'),selected('filter-kelas'),$('filter-assessment')?.value?selected('filter-assessment'):'Rekod markah dalam skop semasa'].filter(Boolean).join(' · '),
+      note:'Skop mengikut penapis Dashboard. Ringkasan GPMP menggunakan skopnya yang dipaparkan pada slaid GPMP.'
+    };
+    if(kind==='marks')return {
+      school,date,title:'Analisis Markah Ujian Sejarah',
+      scope:[selected('analytics-year-session'),selected('analytics-year-level'),selected('analytics-class'),selected('analytics-assessment-type')].filter(Boolean).join(' · '),
+      note:[`Utama: ${selected('analytics-assessment-a')}`,`Banding: ${selected('analytics-assessment-b')}`].join(' · ')
+    };
     if(kind==='headcount')return {
       school,date,title:'Headcount & Analisis Prestasi Sejarah',
       scope:[selected('headcount-session'),selected('headcount-year'),selected('headcount-class')].filter(Boolean).join(' · '),
@@ -221,7 +302,7 @@
   function createSlide(doc, descriptor, metadata) {
     const slide=doc.createElement('section');slide.className='ps-slide';
     slide.dataset.section=descriptor.section;
-    slide.innerHTML=`<header class="ps-header"><div><p class="ps-eyebrow">PANITIA SEJARAH · ${escape(descriptor.section)}</p><h1>${escape(descriptor.title)}</h1><p class="ps-scope">${escape(metadata.scope)}</p></div><span class="ps-school">${escape(metadata.school)}</span></header><main class="ps-main"></main><footer class="ps-footer"><span>${escape(metadata.title)}</span><span>Dijana ${escape(metadata.date)}</span><strong class="ps-page-number"></strong></footer>`;
+    slide.innerHTML=`<header class="ps-header"><div><p class="ps-eyebrow">PANITIA SEJARAH · ${escape(descriptor.section)}</p><h1>${escape(descriptor.title)}</h1><p class="ps-scope">${escape(descriptor.scope||metadata.scope)}</p></div><span class="ps-school">${escape(metadata.school)}</span></header><main class="ps-main"></main><footer class="ps-footer"><span>${escape(metadata.title)}</span><span>Dijana ${escape(metadata.date)}</span><strong class="ps-page-number"></strong></footer>`;
     if(descriptor.note)slide.querySelector('.ps-main').appendChild(Object.assign(doc.createElement('p'),{className:'ps-table-note',textContent:descriptor.note}));
     return slide;
   }
@@ -259,8 +340,10 @@
           row.remove();startPage();body.appendChild(row);
         }
       });
+      // Keep the measured header height unchanged after pagination. Adding a
+      // part counter to a long title can wrap it and steal space from the table.
       if(part>1)Array.from(deck.children).filter(page=>page.dataset.section===descriptor.section&&page.querySelector('h1')?.textContent===descriptor.title).forEach((page,index)=>{
-        page.querySelector('h1').appendChild(doc.createTextNode(` · ${index+1}/${part}`));
+        page.querySelector('.ps-footer span').appendChild(doc.createTextNode(` · Bahagian ${index+1}/${part}`));
       });
     }
     const pages=Array.from(deck.querySelectorAll('.ps-slide'));
@@ -272,7 +355,14 @@
     const frame=dialog?.querySelector('iframe'),doc=frame?.contentDocument;
     if(!doc?.documentElement)return;
     const width=dialog.querySelector('[data-ps-format]')?.value==='a4'?1122.52:1280;
-    doc.documentElement.style.setProperty('--ps-preview-scale',String(Math.min(1,Math.max(.18,(frame.clientWidth-38)/width))));
+    const available=Math.min(frame.clientWidth,doc.documentElement.clientWidth||frame.clientWidth);
+    const scale=Math.min(1,Math.max(.18,(available-38)/width));
+    doc.documentElement.style.setProperty('--ps-preview-scale',String(scale));
+    const deck=doc.querySelector('.ps-deck'),viewport=doc.querySelector('.ps-preview-viewport');
+    if(deck&&viewport){
+      deck.style.left=Math.max(0,(available-width*scale)/2)+'px';
+      viewport.style.height=Math.ceil(deck.offsetHeight*scale)+'px';
+    }
   }
 
   async function loadPreview() {
@@ -287,7 +377,7 @@
       const timer=setTimeout(()=>reject(new Error('Pratonton mengambil masa terlalu lama. Cuba buka semula.')),15000);
       frame.onload=()=>{clearTimeout(timer);resolve();};
     });
-    frame.srcdoc=`<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="color-scheme" content="light"><title>${escape(snapshot.metadata.title)}</title><link rel="stylesheet" href="${escape(stylesheetUrl)}"><style>@page{size:${pageSize};margin:0}</style></head><body class="ps-document" data-format="${format}"><div class="ps-deck"></div></body></html>`;
+    frame.srcdoc=`<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="color-scheme" content="light"><title>${escape(snapshot.metadata.title)}</title><link rel="stylesheet" href="${escape(stylesheetUrl)}"><style>@page{size:${pageSize};margin:0}</style></head><body class="ps-document" data-format="${format}"><div class="ps-preview-viewport"><div class="ps-deck"></div></div></body></html>`;
     try {
       await loaded;
       if(token!==generation||!dialog?.open)return;
@@ -315,13 +405,15 @@
   }
 
   function open(kind) {
-    if(!['headcount','pbd'].includes(kind))return;
-    const view=$(kind==='headcount'?'view-headcount':'view-analytics-pbd');
+    const views={headcount:'view-headcount',pbd:'view-analytics-pbd',dashboard:'view-dashboard',marks:'view-analytics-marks'};
+    const collectors={headcount:collectHeadcount,pbd:collectPbd,dashboard:collectDashboard,marks:collectMarks};
+    if(!views[kind])return;
+    const view=$(views[kind]);
     if(!view||view.classList.contains('hidden'))return;
     if(dialog)close();
     previousFocus=document.activeElement;
     const metadata=scopeFor(kind);
-    current={metadata,slides:kind==='headcount'?collectHeadcount():collectPbd()};
+    current={metadata,slides:collectors[kind]()};
     dialog=node('dialog','presentation-print-dialog');
     dialog.id='isejarah-presentation-dialog';dialog.setAttribute('aria-labelledby','ps-dialog-title');
     dialog.innerHTML=`<div class="presentation-print-toolbar"><div><p>PRATONTON CETAKAN</p><h2 id="ps-dialog-title">${escape(metadata.title)}</h2></div><div class="presentation-print-actions"><label for="ps-print-format">Saiz halaman<select id="ps-print-format" data-ps-format><option value="slides">Slaid 16:9</option><option value="a4">A4 landskap</option></select></label><button type="button" data-ps-print disabled>Cetak / Simpan PDF</button><button type="button" data-ps-close aria-label="Tutup pratonton cetakan">Tutup</button></div></div><p class="presentation-print-status" data-ps-status role="status"></p><iframe class="presentation-print-frame" title="Pratonton slaid cetakan" sandbox="allow-same-origin allow-modals"></iframe><p class="presentation-print-help">Pilih “Save as PDF” / “Simpan sebagai PDF” dalam tetingkap cetakan. Gunakan skala 100% dan matikan header/footer pelayar.</p>`;
@@ -340,9 +432,15 @@
   }
 
   function install() {
+    if($('dashboard-kpi-grid')&&!$('dashboard-presentation-print-actions')) {
+      const bar=node('div','presentation-print-actions-row');bar.id='dashboard-presentation-print-actions';
+      $('dashboard-kpi-grid').before(bar);
+    }
     const targets=[
       {kind:'headcount',id:'headcount-presentation-print-btn',group:document.querySelector('#view-headcount .hc-page-header > div:last-child')},
-      {kind:'pbd',id:'pbd-presentation-print-btn',group:document.querySelector('#view-analytics-pbd .analysis-export-btn--pbd')?.parentElement}
+      {kind:'pbd',id:'pbd-presentation-print-btn',group:document.querySelector('#view-analytics-pbd .analysis-export-btn--pbd')?.parentElement},
+      {kind:'dashboard',id:'dashboard-presentation-print-btn',group:$('dashboard-presentation-print-actions')},
+      {kind:'marks',id:'marks-presentation-print-btn',group:document.querySelector('#view-analytics-marks .analysis-export-btn--marks')?.parentElement}
     ];
     targets.forEach(({kind,id,group})=>{
       if(!group||$(id))return;
