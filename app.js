@@ -2710,6 +2710,15 @@
         return await phase10SaveScoreRecordRemote(scoreRec);
     }
 
+    function refreshVisibleUpgradeView() {
+        if(!window.iSejarahV66?.render)return;
+        const tab=['teacher-dashboard','completeness','attention','admin-tools','executive-report'].find(id=>{
+            const view=document.getElementById(`view-${id}`);
+            return view&&!view.classList.contains('hidden');
+        });
+        if(tab)window.iSejarahV66.render(tab);
+    }
+
     function refreshLiveMarksDependents() {
         // All modules calculate from the same appState.scores collection.
         if(typeof updateDashboardKPIs==='function')updateDashboardKPIs();
@@ -2729,6 +2738,7 @@
            !document.getElementById('view-student-profile')?.classList.contains('hidden')){
             renderStudentProfile();
         }
+        refreshVisibleUpgradeView();
     }
 
     function showGlobalSaveSuccess() {
@@ -2946,6 +2956,7 @@
            !document.getElementById('view-analytics-class')?.classList.contains('hidden')){
             renderClassComparison();
         }
+        refreshVisibleUpgradeView();
     }
 
     function showPbdSaveState(message, mode = 'saving') {
@@ -5135,7 +5146,8 @@
             persistPhase4State();
             persistUsersState();
             updatePhase9Branding();
-            populateAcademicSessionSelectors(false);
+            // A routine refresh must retain the session being reviewed.
+            populateAcademicSessionSelectors(true);
             phase10SetStatus('SUPABASE','Supabase selesai dimuat.');
 
             if(showToast){
@@ -5261,7 +5273,7 @@
                 if(!document.getElementById('view-classes')?.classList.contains('hidden')&&typeof renderClasses==='function')renderClasses();
                 updateDashboardKPIs();
                 const visibleView=[...document.querySelectorAll('[id^="view-"]')].find(el=>!el.classList.contains('hidden'));
-                if(visibleView&&window.iSejarahV66)window.iSejarahV66.render(visibleView.id.slice(5));
+                refreshVisibleUpgradeView();
                 if(visibleView?.id==='view-students')renderStudents();
                 window.iSejarahLiveSync?.stamp();
             }catch(err){
@@ -5307,21 +5319,20 @@
             payload=>{
                 const eventType=String(payload?.eventType||'').toUpperCase();
                 const id=String(payload?.new?.id||payload?.old?.id||'');
-                if(!id)return;
+                if(!id||phase10PendingScoreWrites.has(id))return;
 
                 if(eventType==='DELETE'){
-                    if(!phase10PendingScoreWrites.has(id)){
-                        appState.scores=appState.scores.filter(s=>String(s.id)!==id);
-                    }
+                    appState.scores=appState.scores.filter(s=>String(s.id)!==id);
                 }else{
                     const incoming=phase10DocData(payload.new);
-                    if(incoming&&!phase10PendingScoreWrites.has(id)){
-                        const idx=appState.scores.findIndex(s=>String(s.id)===id);
-                        if(idx>=0)appState.scores[idx]=incoming;
-                        else appState.scores.push(incoming);
-                    }
+                    if(!incoming)return;
+                    const idx=appState.scores.findIndex(s=>String(s.id)===id);
+                    if(idx>=0)appState.scores[idx]=incoming;
+                    else appState.scores.push(incoming);
                 }
 
+                // Do not let an older full snapshot overwrite this live edit.
+                phase10RemoteLoadSeq++;
                 persistMarksState();
                 phase10SetStatus('SUPABASE','Live sync: scores');
                 phase10ScheduleUiRefresh();
@@ -5346,13 +5357,14 @@
                     appState.pbdRecords=appState.pbdRecords.filter(r=>String(r.id)!==id);
                 }else{
                     const incoming=phase10DocData(payload.new);
-                    if(incoming){
-                        const idx=appState.pbdRecords.findIndex(r=>String(r.id)===id);
-                        if(idx>=0)appState.pbdRecords[idx]=incoming;
-                        else appState.pbdRecords.push(incoming);
-                    }
+                    if(!incoming)return;
+                    const idx=appState.pbdRecords.findIndex(r=>String(r.id)===id);
+                    if(idx>=0)appState.pbdRecords[idx]=incoming;
+                    else appState.pbdRecords.push(incoming);
                 }
 
+                // Protect realtime updates/deletes from a slower full refresh.
+                phase10RemoteLoadSeq++;
                 persistPhase4State();
                 phase10SetStatus('SUPABASE','Live sync: PBD');
                 phase10ScheduleUiRefresh();
@@ -5615,6 +5627,7 @@
             }else if(!document.getElementById('view-dashboard')?.classList.contains('hidden')){
                 setTimeout(initCharts,80);
             }
+            refreshVisibleUpgradeView();
 
             phase10SetStatus('SUPABASE','Fast login · live sync aktif.');
         }else{
@@ -10975,7 +10988,8 @@
 
             const isStudentsVisible = !document.getElementById('view-students').classList.contains('hidden');
             const isClassesVisible = !document.getElementById('view-classes').classList.contains('hidden');
-            const isDskpVisible = !document.getElementById('view-dskp').classList.contains('hidden');
+            const dskpView = document.getElementById('view-dskp');
+            const isDskpVisible = !!dskpView && !dskpView.classList.contains('hidden');
 
             if (isStudentsVisible) renderStudents();
             if (isClassesVisible) renderClasses();
@@ -10996,6 +11010,7 @@
                 populatePbdMatrixClassOptions(globalClass !== 'ALL' ? globalClass : document.getElementById('pbd-class').value);
                 renderPbdModule();
             }
+            refreshVisibleUpgradeView();
         }, 250);
     }
 
