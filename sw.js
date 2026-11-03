@@ -1,8 +1,8 @@
 'use strict';
 
 const CACHE_PREFIX = 'isejarah-static-';
-const CACHE_NAME = `${CACHE_PREFIX}v88-23-extended-slides`;
-const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-23-extended-slides';
+const CACHE_NAME = `${CACHE_PREFIX}v88-24-stable-filters`;
+const RUNTIME_CACHE_NAME = 'isejarah-runtime-v88-24-stable-filters';
 const OFFLINE_URL = './offline.html';
 const STATIC_CDN_HOSTS = new Set([
   'cdn.tailwindcss.com',
@@ -49,8 +49,8 @@ const STATIC_ASSETS = [
   './polish.css?v=86.1',
   './workspace.css?v=88.13',
   './modules/workspace.js?v=88.13',
-  './app.js?v=88.23',
-  './modules/live-sync.js?v=88.16',
+  './app.js?v=88.24',
+  './modules/live-sync.js?v=88.24',
   './item-analysis.css?v=88.19',
   './modules/item-analysis-data.js?v=88.16',
   './modules/item-analysis-core.js?v=88.16',
@@ -60,9 +60,9 @@ const STATIC_ASSETS = [
   './config.js',
   './tailwind.config.js',
   './modules/upgrades.js?v=88.23',
-  './presentation-print.css?v=88.23',
+  './presentation-print.css?v=88.24',
   './executive-report.css?v=88.23',
-  './modules/presentation-print.js?v=88.23',
+  './modules/presentation-print.js?v=88.24',
   './manifest.webmanifest',
   OFFLINE_URL,
   './assets/background-1.jpg',
