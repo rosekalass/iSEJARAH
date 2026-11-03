@@ -447,7 +447,7 @@ html.theme-dark .live-sync-button{background:#d9c8ef;color:#302044;border-color:
                   <label class="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
                     <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i> Sesi Akademik
                   </label>
-                  <select id="filter-academic-year" onchange="onFilterChange()" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                  <select id="filter-academic-year" onchange="onFilterChange(event)" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                     <option value="2026">2026 (Semasa)</option>
                     <option value="2025">2025/2026</option>
                   </select>
@@ -458,7 +458,7 @@ html.theme-dark .live-sync-button{background:#d9c8ef;color:#302044;border-color:
                   <label class="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
                     <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-slate-400"></i> Tahun
                   </label>
-                  <select id="filter-tahun" onchange="onTahunChange()" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                  <select id="filter-tahun" onchange="onTahunChange(event)" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                     <option value="ALL">Semua Tahun (4, 5, 6)</option>
                     <option value="4">Tahun 4</option>
                     <option value="5">Tahun 5</option>
@@ -471,15 +471,21 @@ html.theme-dark .live-sync-button{background:#d9c8ef;color:#302044;border-color:
                   <label class="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
                     <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i> Kelas
                   </label>
-                  <select id="filter-kelas" onchange="onFilterChange()" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                  <select id="filter-kelas" onchange="onFilterChange(event)" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                     <option value="ALL">Semua Kelas</option>
                   </select>
                 </div>
 
                 <!-- Pentaksiran -->
                 <div>
-                  <label class="block text-xs font-medium text-slate-500 mb-1">Pentaksiran</label>
-                  <select id="filter-assessment" onchange="onFilterChange()" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                  <label for="dashboard-assessment-type" class="block text-xs font-medium text-slate-500 mb-1">Pentaksiran Markah</label>
+                  <select id="dashboard-assessment-type" onchange="onDashboardAssessmentTypeChange()" aria-describedby="dashboard-filter-basis" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                    <option value="ALL">Pentaksiran terkini</option>
+                    <option value="DIAGNOSTIK">Diagnostik</option>
+                    <option value="UPSA">UPSA</option>
+                    <option value="UASA">UASA</option>
+                  </select>
+                  <select id="filter-assessment" hidden aria-hidden="true" tabindex="-1" style="display:none!important" onchange="onFilterChange(event)">
                     <option value="">Pilih Kelas Dahulu</option>
                   </select>
                 </div>
@@ -492,6 +498,7 @@ html.theme-dark .live-sync-button{background:#d9c8ef;color:#302044;border-color:
             </div>
           </div>
 
+          <p id="dashboard-filter-basis" class="text-xs text-slate-500 leading-relaxed" role="status" aria-live="polite"></p>
           <!-- Dynamic KPI Cards Grid -->
           <div id="dashboard-kpi-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <!-- Total Students -->
@@ -3363,16 +3370,16 @@ html.theme-dark .live-sync-button{background:#d9c8ef;color:#302044;border-color:
   </div>
 
   <link rel="stylesheet" href="item-analysis.css?v=88.19">
-  <link rel="stylesheet" href="presentation-print.css?v=88.23">
+  <link rel="stylesheet" href="presentation-print.css?v=88.24">
   <link rel="stylesheet" href="executive-report.css?v=88.23">
-  <script src="app.js?v=88.23"></script>
+  <script src="app.js?v=88.24"></script>
   <script src="modules/upgrades.js?v=88.23"></script>
   <script src="modules/workspace.js?v=88.13"></script>
   <script src="modules/item-analysis-data.js?v=88.16"></script>
   <script src="modules/item-analysis-core.js?v=88.16"></script>
   <script src="modules/item-analysis.js?v=88.23"></script>
-  <script src="modules/live-sync.js?v=88.16"></script>
-  <script src="modules/presentation-print.js?v=88.23"></script>
+  <script src="modules/live-sync.js?v=88.24"></script>
+  <script src="modules/presentation-print.js?v=88.24"></script>
   <script src="responsive.js?v=88.18"></script>
   <script src="pwa.js"></script>
 </body>
