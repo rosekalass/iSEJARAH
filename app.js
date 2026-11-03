@@ -982,7 +982,6 @@
     }
 
     function refreshStudentClassFilter(preserve=true){
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         const yearEl=document.getElementById('student-year-filter');
         const classEl=document.getElementById('student-class-filter');
         if(!classEl)return;
@@ -1973,12 +1972,14 @@
     }
 
     function updateClassFilterDropdown() {
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         const select=document.getElementById('filter-kelas');
         if(!select)return;
         const currentVal=select.value;
-        let classes=canonicalActiveClasses();
+        const academicYear=document.getElementById('filter-academic-year')?.value||getActiveAcademicYear();
+        const year=document.getElementById('filter-tahun')?.value||'ALL';
+        let classes=canonicalActiveClasses(academicYear);
         if(currentUserRole==='GURU_SEJARAH')classes=classes.filter(c=>c.teacherId===currentUserId);
+        if(year!=='ALL')classes=classes.filter(c=>String(c.year)===String(year));
 
         select.innerHTML='<option value="ALL">Semua Kelas</option>'+
             classes.map(c=>`<option value="${c.id}">${canonicalClassCode(c)} · ${escapeHtml(c.name)}</option>`).join('');
@@ -1991,15 +1992,14 @@
     
     // Synchronize Assessment dropdown with Class selection in Global Filters
     function marksPermittedClasses(academicYear, yearLevel='ALL') {
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes = canonicalActiveClasses(academicYear);
         if (isTeacherSession()) classes = classes.filter(c => c.teacherId === currentUserId);
         if (yearLevel !== 'ALL') classes = classes.filter(c => String(c.year) === String(yearLevel));
         return sortClassesCanonical(classes);
     }
 
-    function initializeMarksScopeControls() {
-        ensureAutoAssessmentTemplates(true,document.getElementById('filter-academic-year')?.value||getActiveAcademicYear());
+    function initializeMarksScopeControls(preserveCurrent=false) {
+        if(!preserveCurrent&&!document.getElementById('view-marks')?.classList.contains('hidden'))ensureAutoAssessmentTemplates(true,document.getElementById('filter-academic-year')?.value||getActiveAcademicYear());
         if(isTeacherSession())syncTeacherAssessmentAvailability('marks');
         const sessionEl = document.getElementById('marks-scope-session');
         const yearEl = document.getElementById('marks-scope-year');
@@ -2014,9 +2014,12 @@
         if ([...classEl.options].some(o => o.value === globalClass)) {
             classEl.value = globalClass;
         } else {
-            const firstActual = [...classEl.options].find(o => o.value);
-            classEl.value = firstActual?.value || '';
-            if (classEl.value) syncMarksScopeToGlobal();
+            // A hidden/background initializer must never choose a class on the
+            // user's behalf and push that first class back into Dashboard.
+            const mayChooseFirst=!preserveCurrent&&!document.getElementById('view-marks')?.classList.contains('hidden');
+            const firstActual=mayChooseFirst?[...classEl.options].find(o=>o.value):null;
+            classEl.value=firstActual?.value||'';
+            if(classEl.value)syncMarksScopeToGlobal();
         }
 
         const note = document.getElementById('marks-access-note');
@@ -2102,13 +2105,13 @@
         lucide.createIcons();
     }
 
-    function updateAssessmentDropdown(preferredAssessmentId = null) {
+    function updateAssessmentDropdown(preferredAssessmentId = null,allowTemplateSync=true) {
         const classId=document.getElementById('filter-kelas')?.value||'ALL';
         const academicYear=document.getElementById('filter-academic-year')?.value||getActiveAcademicYear();
         const assessSelect=document.getElementById('filter-assessment');
         if(!assessSelect)return;
 
-        ensureAutoAssessmentTemplates(true,academicYear);
+        if(allowTemplateSync&&!document.getElementById('view-marks')?.classList.contains('hidden'))ensureAutoAssessmentTemplates(true,academicYear);
         if(isTeacherSession())syncTeacherAssessmentAvailability('marks');
 
         const prevSelected=preferredAssessmentId||assessSelect.value;
@@ -2726,7 +2729,7 @@
 
         if(typeof initializeMarksAnalytics==='function' &&
            !document.getElementById('view-analytics-marks')?.classList.contains('hidden')){
-            initializeMarksAnalytics();
+            initializeMarksAnalytics(true);
         }
 
         if(typeof renderHeadcount==='function' &&
@@ -2735,7 +2738,7 @@
         }
 
         if(typeof renderStudentProfile==='function' &&
-           !document.getElementById('view-student-profile')?.classList.contains('hidden')){
+           !document.getElementById('view-analytics-student')?.classList.contains('hidden')){
             renderStudentProfile();
         }
         refreshVisibleUpgradeView();
@@ -2914,7 +2917,6 @@
 
     function getPermittedClassesForPbd() {
         const academicYear = document.getElementById('filter-academic-year')?.value || '2026';
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes = canonicalActiveClasses(academicYear);
         if (currentUserRole === 'GURU_SEJARAH') {
             classes = classes.filter(c => c.teacherId === currentUserId);
@@ -4059,8 +4061,9 @@
         const academicYear=document.getElementById('filter-academic-year')?.value||getActiveAcademicYear();
         const yearFilter=document.getElementById('filter-tahun')?.value||'ALL';
         const classFilter=document.getElementById('filter-kelas')?.value||'ALL';
+        const selectedType=document.getElementById('dashboard-assessment-type')?.value||'ALL';
+        const assessmentType=['DIAGNOSTIK','UPSA','UASA'].includes(selectedType)?selectedType:'ALL';
 
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes=canonicalActiveClasses(academicYear);
         if(isTeacherSession())classes=classes.filter(c=>c.teacherId===currentUserId);
         if(yearFilter!=='ALL')classes=classes.filter(c=>String(c.year)===String(yearFilter));
@@ -4075,11 +4078,16 @@
         const studentIds=new Set(students.map(s=>s.id));
         const assessments=appState.assessments.filter(a=>
             String(a.academicYear||academicYear)===String(academicYear) &&
-            classIds.has(a.classId)
+            classIds.has(a.classId) && (assessmentType==='ALL'||a.type===assessmentType)
         );
         const assessmentById=new Map(assessments.map(a=>[a.id,a]));
         const scores=getActualScoreRecords().filter(sc=>studentIds.has(sc.studentId)&&assessmentById.has(sc.assessmentId));
-        return {academicYear,yearFilter,classFilter,classes,classIds,students,studentIds,assessments,assessmentById,scores};
+        return {academicYear,yearFilter,classFilter,assessmentType,classes,classIds,students,studentIds,assessments,assessmentById,scores};
+    }
+
+    function onDashboardAssessmentTypeChange(){
+        updateDashboardKPIs();
+        if(chartGradesInstance&&chartTpInstance)updateCharts();
     }
 
     function dashboardLatestScoresByStudent(scope) {
@@ -4492,6 +4500,8 @@
 
     function updateDashboardKPIs() {
         const scope=getDashboardScope();
+        const basis=document.getElementById('dashboard-filter-basis');
+        if(basis)basis.textContent=`Markah: ${scope.assessmentType==='ALL'?'pentaksiran terkini setiap murid':scope.assessmentType}. PBD: ${pbdPeriodLabel(dashboardPbdPeriod(scope))}. Intervensi menggunakan rekod dan trend terkini. Markah kosong tidak dianggap sebagai sifar.`;
         const latestByStudent=dashboardLatestScoresByStudent(scope);
         const scored=[...latestByStudent.values()].map(x=>x.score);
         const values=scored.map(s=>Number(s.percentage)).filter(Number.isFinite);
@@ -5257,21 +5267,21 @@
         phase10RealtimeRefreshTimer=setTimeout(()=>{
             if(window.iSejarahLiveSync?.busyEditing())return;
             try{
-                ensureAutoAssessmentTemplates(false,document.getElementById('filter-academic-year')?.value||getActiveAcademicYear());
                 updateClassFilterDropdown();
 
                 if(!document.getElementById('view-marks')?.classList.contains('hidden')){
-                    initializeMarksScopeControls();
-                    updateAssessmentDropdown();
+                    initializeMarksScopeControls(true);
+                    updateAssessmentDropdown(null,false);
                     renderMarksModule();
                 }
                 if(!document.getElementById('view-pbd')?.classList.contains('hidden'))initializePbdModule(true);
-                if(!document.getElementById('view-analytics-marks')?.classList.contains('hidden')&&typeof initializeMarksAnalytics==='function')initializeMarksAnalytics();
-                if(!document.getElementById('view-analytics-pbd')?.classList.contains('hidden')&&typeof renderPbdAnalytics==='function')renderPbdAnalytics();
+                if(!document.getElementById('view-analytics-marks')?.classList.contains('hidden')&&typeof initializeMarksAnalytics==='function')initializeMarksAnalytics(true);
+                if(!document.getElementById('view-analytics-pbd')?.classList.contains('hidden')&&typeof initializePbdAnalytics==='function')initializePbdAnalytics(true);
                 if(!document.getElementById('view-headcount')?.classList.contains('hidden')&&typeof renderHeadcount==='function')renderHeadcount();
                 if(!document.getElementById('view-users')?.classList.contains('hidden')&&typeof renderUsers==='function')renderUsers();
                 if(!document.getElementById('view-classes')?.classList.contains('hidden')&&typeof renderClasses==='function')renderClasses();
                 updateDashboardKPIs();
+                if(chartGradesInstance&&chartTpInstance)updateCharts();
                 const visibleView=[...document.querySelectorAll('[id^="view-"]')].find(el=>!el.classList.contains('hidden'));
                 refreshVisibleUpgradeView();
                 if(visibleView?.id==='view-students')renderStudents();
@@ -5622,7 +5632,7 @@
             // Refresh only the currently visible module. Heavy charts are not
             // created during authentication itself.
             if(!document.getElementById('view-marks')?.classList.contains('hidden')){
-                initializeMarksScopeControls();
+                initializeMarksScopeControls(true);
                 renderMarksModule();
             }else if(!document.getElementById('view-dashboard')?.classList.contains('hidden')){
                 setTimeout(initCharts,80);
@@ -6251,6 +6261,7 @@
             else yearEl.value='4';
         } else if(oldYear)yearEl.value=oldYear;
         populatePbdMatrixClassOptions(oldClass||(globalClass!=='ALL'?globalClass:''));
+        if(preserveCurrent)classEl.value=oldClass&&[...classEl.options].some(o=>o.value===oldClass)?oldClass:'';
         const note=document.getElementById('pbd-matrix-access-note');
         if(note)note.textContent=isTeacherSession()?'Guru hanya boleh mengisi kelas yang ditugaskan kepadanya. Purata Tema dan Tahap Akhir dikira automatik.':'Admin boleh mengisi semua kelas. Purata Tema dan Tahap Akhir dikira automatik.';
         const lockBtn=document.getElementById('btn-pbd-lock');if(lockBtn)lockBtn.classList.toggle('hidden',!isAdminSession());
@@ -6840,7 +6851,6 @@
         const academicYear = document.getElementById('analytics-year-session')?.value || '2026';
         const yearLevel = document.getElementById('analytics-year-level')?.value || 'ALL';
         const classId = document.getElementById('analytics-class')?.value || 'ALL';
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes = canonicalActiveClasses(academicYear);
         if (currentUserRole === 'GURU_SEJARAH') classes = classes.filter(c => c.teacherId === currentUserId);
         if (yearLevel !== 'ALL') classes = classes.filter(c => String(c.year) === String(yearLevel));
@@ -6863,7 +6873,6 @@
         const academicYear = document.getElementById('analytics-year-session').value;
         const yearLevel = document.getElementById('analytics-year-level').value;
         const previous = select.value;
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes = canonicalActiveClasses(academicYear);
         if (currentUserRole === 'GURU_SEJARAH') classes = classes.filter(c => c.teacherId === currentUserId);
         if (yearLevel !== 'ALL') classes = classes.filter(c => String(c.year) === String(yearLevel));
@@ -6900,18 +6909,20 @@
         else b.value = 'NONE';
     }
 
-    function initializeMarksAnalytics() {
+    function initializeMarksAnalytics(preserveCurrent=false) {
         const globalAcademic = document.getElementById('filter-academic-year')?.value || '2026';
         const globalYear = document.getElementById('filter-tahun')?.value || 'ALL';
         const globalClass = document.getElementById('filter-kelas')?.value || 'ALL';
-        document.getElementById('analytics-year-session').value = globalAcademic;
-        document.getElementById('analytics-year-level').value = globalYear;
-        document.getElementById('analytics-assessment-type').value = marksAssessmentTypeFilter;
+        if(!preserveCurrent){
+            document.getElementById('analytics-year-session').value=globalAcademic;
+            document.getElementById('analytics-year-level').value=globalYear;
+            document.getElementById('analytics-assessment-type').value=marksAssessmentTypeFilter||'UPSA';
+        }
         analyticsPopulateClassOptions();
-        if ([...document.getElementById('analytics-class').options].some(o => o.value === globalClass)) document.getElementById('analytics-class').value = globalClass;
+        if(!preserveCurrent&&[...document.getElementById('analytics-class').options].some(o=>o.value===globalClass))document.getElementById('analytics-class').value=globalClass;
         analyticsPopulateAssessmentOptions();
         document.getElementById('analytics-threshold-label').textContent = `${appSettings.masteryThreshold}%`;
-        resetAnalyticsStudentLocalFilters();
+        if(!preserveCurrent)resetAnalyticsStudentLocalFilters();
         const nearMargin=document.getElementById('analytics-nearmiss-margin');
         if(nearMargin)nearMargin.textContent=Math.max(1,Number(phase9SchoolProfile?.nearMissMargin||5));
         renderMarksAnalytics();
@@ -6932,8 +6943,8 @@
 
     function onAnalyticsAssessmentTypeChange() {
         const type = document.getElementById('analytics-assessment-type')?.value || 'UPSA';
-        marksAssessmentTypeFilter = type;
-        updateMarksTypeButtonUI();
+        // Analysis is read-only and has its own exam selection. It must not
+        // change the separate examination currently open for score entry.
         analyticsPopulateAssessmentOptions();
         resetAnalyticsStudentLocalFilters();
         renderMarksAnalytics();
@@ -7546,7 +7557,6 @@
     }
 
     function headcountAllowedClasses(academicYear,year,classId='ALL'){
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let rows=canonicalActiveClasses(academicYear).filter(c=>[4,5,6].includes(Number(c.year)));
         if(year&&year!=='ALL')rows=rows.filter(c=>String(c.year)===String(year));
         if(isTeacherSession())rows=rows.filter(c=>c.teacherId===currentUserId);
@@ -8309,7 +8319,6 @@
 
     // --- PHASE 6: PBD ANALYTICS BY STANDARD KANDUNGAN + THEME HEATMAP ---
     function pbdAnalyticsAllowedClasses(academicYear,yearLevel='ALL',classId='ALL') {
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes=canonicalActiveClasses(academicYear);
         if(isTeacherSession())classes=classes.filter(c=>c.teacherId===currentUserId);
         if(yearLevel!=='ALL')classes=classes.filter(c=>String(c.year)===String(yearLevel));
@@ -8399,11 +8408,11 @@
         return {masteryTp,byStudentDskp,expected,recorded,completion,counts,mastered,masteryRate,avgAll,skMetrics,strongest,weakest,supportCount,studentThemeMap,studentFinalMap,themeNames,themeMetrics};
     }
 
-    function initializePbdAnalytics() {
+    function initializePbdAnalytics(preserveCurrent=false) {
         const globalSession=document.getElementById('filter-academic-year')?.value||'2026',globalYear=document.getElementById('filter-tahun')?.value||'ALL',globalClass=document.getElementById('filter-kelas')?.value||'ALL',sessionEl=document.getElementById('pbd-an-session'),yearEl=document.getElementById('pbd-an-year');
-        if(sessionEl&&[...sessionEl.options].some(o=>o.value===globalSession))sessionEl.value=globalSession;if(yearEl)yearEl.value=globalYear;
-        pbdAnalyticsPopulatePeriodOptions();pbdAnalyticsPopulateClassOptions();const classEl=document.getElementById('pbd-an-class');if(classEl&&globalClass!=='ALL'&&[...classEl.options].some(o=>o.value===globalClass))classEl.value=globalClass;
-        pbdAnalyticsPopulateThemeSkOptions(true);document.getElementById('pbd-an-mastery-threshold-label').textContent=appSettings.pbdMasteryTp||3;renderPbdAnalytics();
+        if(!preserveCurrent){if(sessionEl&&[...sessionEl.options].some(o=>o.value===globalSession))sessionEl.value=globalSession;if(yearEl)yearEl.value=globalYear;}
+        pbdAnalyticsPopulatePeriodOptions();pbdAnalyticsPopulateClassOptions();const classEl=document.getElementById('pbd-an-class');if(!preserveCurrent&&classEl&&[...classEl.options].some(o=>o.value===globalClass))classEl.value=globalClass;
+        pbdAnalyticsPopulateThemeSkOptions(!preserveCurrent);document.getElementById('pbd-an-mastery-threshold-label').textContent=appSettings.pbdMasteryTp||3;renderPbdAnalytics();
     }
 
     function renderPbdAnalytics() {
@@ -8493,13 +8502,13 @@
         return classes;
     }
 
-    function initializeStudentProfile(preselectStudentId = null) {
+    function initializeStudentProfile(preselectStudentId = null,preserveCurrent=false) {
         const ay = document.getElementById('profile-academic-year');
         const globalAy = document.getElementById('filter-academic-year')?.value || '2026';
-        if (ay) ay.value = [...ay.options].some(o => o.value === globalAy) ? globalAy : ay.value;
+        if(ay&&!preserveCurrent)ay.value=[...ay.options].some(o=>o.value===globalAy)?globalAy:ay.value;
         const yearEl = document.getElementById('profile-year');
         const globalYear = document.getElementById('filter-tahun')?.value || 'ALL';
-        if (yearEl) yearEl.value = ['4','5','6'].includes(globalYear) ? globalYear : 'ALL';
+        if(yearEl&&!preserveCurrent)yearEl.value=['4','5','6'].includes(globalYear)?globalYear:'ALL';
         populateStudentProfilePeriods();
         populateStudentProfileClasses();
         populateStudentProfileStudents(preselectStudentId);
@@ -8706,7 +8715,6 @@
     };
 
     function getPermittedInterventionClasses(academicYear = null) {
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let rows = canonicalActiveClasses(academicYear||undefined);
         if (academicYear) rows = rows.filter(c => String(c.academicYear) === String(academicYear));
         if (currentUserRole === 'GURU_SEJARAH') rows = rows.filter(c => c.teacherId === currentUserId);
@@ -8895,17 +8903,17 @@
         renderInterventionModule();
     }
 
-    function initializeInterventionModule() {
+    function initializeInterventionModule(preserveCurrent=false) {
         const ay = document.getElementById('intervention-academic-year');
         const year = document.getElementById('intervention-year');
         const globalAy = document.getElementById('filter-academic-year')?.value;
         const globalYear = document.getElementById('filter-tahun')?.value;
         const globalClass = document.getElementById('filter-kelas')?.value;
-        if (ay && globalAy && [...ay.options].some(o => o.value === globalAy)) ay.value = globalAy;
-        if (year && globalYear && [...year.options].some(o => o.value === globalYear)) year.value = globalYear;
-        populateInterventionClassFilter(false);
+        if(!preserveCurrent&&ay&&globalAy&&[...ay.options].some(o=>o.value===globalAy))ay.value=globalAy;
+        if(!preserveCurrent&&year&&globalYear&&[...year.options].some(o=>o.value===globalYear))year.value=globalYear;
+        populateInterventionClassFilter(preserveCurrent);
         const classEl = document.getElementById('intervention-class');
-        if (classEl && globalClass && [...classEl.options].some(o => o.value === globalClass)) classEl.value = globalClass;
+        if(!preserveCurrent&&classEl&&globalClass&&[...classEl.options].some(o=>o.value===globalClass))classEl.value=globalClass;
         renderInterventionModule();
     }
 
@@ -9593,7 +9601,6 @@
     setTimeout(()=>populateAcademicSessionSelectors(false),0);
 
     function getPhase9PermittedClasses(academicYear = null) {
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let rows = canonicalActiveClasses(academicYear||undefined);
         if (academicYear) rows = rows.filter(c => String(c.academicYear) === String(academicYear));
         if (currentUserRole === 'GURU_SEJARAH') rows = rows.filter(c => c.teacherId === currentUserId);
@@ -10230,7 +10237,6 @@
     function classCompareAllowedClasses() {
         const academicYear = document.getElementById('class-compare-session')?.value || document.getElementById('filter-academic-year')?.value || '2026';
         const yearLevel = document.getElementById('class-compare-year')?.value || 'ALL';
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes = canonicalActiveClasses(academicYear);
         if (currentUserRole === 'GURU_SEJARAH') classes = classes.filter(c => c.teacherId === currentUserId);
         if (yearLevel !== 'ALL') classes = classes.filter(c => String(c.year) === String(yearLevel));
@@ -10319,15 +10325,14 @@
         };
     }
 
-    function initializeClassComparison() {
+    function initializeClassComparison(preserveCurrent=false) {
         const session = document.getElementById('class-compare-session');
         const year = document.getElementById('class-compare-year');
         const type = document.getElementById('class-compare-assessment-type');
         const period = document.getElementById('class-compare-period');
         if (!session || !year || !type || !period) return;
 
-        session.value = document.getElementById('filter-academic-year')?.value || '2026';
-        year.value = document.getElementById('filter-tahun')?.value || 'ALL';
+        if(!preserveCurrent){session.value=document.getElementById('filter-academic-year')?.value||'2026';year.value=document.getElementById('filter-tahun')?.value||'ALL';}
 
         const previousType = type.value || 'ALL';
         type.innerHTML = '<option value="ALL">Semua Pentaksiran</option>' +
@@ -10335,7 +10340,7 @@
         if ([...type.options].some(o => o.value === previousType)) type.value = previousType;
 
         const pbdPeriod = document.getElementById('pbd-period')?.value || 'PERTENGAHAN';
-        if ([...period.options].some(o => o.value === pbdPeriod)) period.value = pbdPeriod;
+        if(!preserveCurrent&&[...period.options].some(o=>o.value===pbdPeriod))period.value=pbdPeriod;
         renderClassComparison();
     }
 
@@ -10961,28 +10966,32 @@
     }
 
     // Filter Logic
-    function onFilterChange() {
+    let globalFilterRefreshTimer=null;
+    function onFilterChange(event=null) {
         console.log("Filters changed. Refreshing scoped data...");
 
-        const sourceId = window.event?.target?.id || '';
+        const sourceId=event?.target?.id||window.event?.target?.id||'';
         const kpis = document.querySelectorAll('.shadow-card h3');
         kpis.forEach(kpi => {
             kpi.classList.add('opacity-50', 'scale-95');
             setTimeout(() => kpi.classList.remove('opacity-50', 'scale-95'), 250);
         });
 
-        const isMarksVisible = !document.getElementById('view-marks').classList.contains('hidden');
-        const isPbdVisible = !document.getElementById('view-pbd').classList.contains('hidden');
-        const isMarksAnalyticsVisible = !document.getElementById('view-analytics-marks').classList.contains('hidden');
-        const isPbdAnalyticsVisible = !document.getElementById('view-analytics-pbd').classList.contains('hidden');
-        const isStudentProfileVisible = !document.getElementById('view-analytics-student').classList.contains('hidden');
-        const isClassComparisonVisible = !document.getElementById('view-analytics-class').classList.contains('hidden');
+        // A user can change a module's own filters or navigate elsewhere while
+        // this small UI delay is pending. Never apply a captured old view/scope.
+        const scopeKey=id=>JSON.stringify([...document.querySelectorAll(`#view-${id} select,#view-${id} input`)].map(el=>[el.id,el.value]));
+        const moduleIds=['analytics-marks','analytics-pbd','analytics-student','analytics-class','intervention','pbd'];
+        const scopes=new Map(moduleIds.map(id=>[id,scopeKey(id)]));
+        const changed=id=>scopes.get(id)!==scopeKey(id);
+        const visible=id=>{const el=document.getElementById(`view-${id}`);return el&&!el.classList.contains('hidden');};
 
-        if (sourceId === 'filter-kelas' || sourceId === 'filter-academic-year') {
-            updateAssessmentDropdown();
+        if(sourceId==='filter-academic-year')updateClassFilterDropdown();
+        if(sourceId==='filter-kelas'||sourceId==='filter-academic-year'){
+            updateAssessmentDropdown(null,false);
         }
 
-        setTimeout(() => {
+        clearTimeout(globalFilterRefreshTimer);
+        globalFilterRefreshTimer=setTimeout(() => {
             updateDashboardKPIs();
             updateCharts();
 
@@ -10994,13 +11003,14 @@
             if (isStudentsVisible) renderStudents();
             if (isClassesVisible) renderClasses();
             if (isDskpVisible) renderDskp();
-            if (isMarksVisible) renderMarksModule();
-            if (isMarksAnalyticsVisible) initializeMarksAnalytics();
-            if (isPbdAnalyticsVisible) initializePbdAnalytics();
-            if (isStudentProfileVisible) initializeStudentProfile();
-            if (isClassComparisonVisible) initializeClassComparison();
+            if(visible('marks'))renderMarksModule();
+            if(visible('analytics-marks'))initializeMarksAnalytics(changed('analytics-marks'));
+            if(visible('analytics-pbd'))initializePbdAnalytics(changed('analytics-pbd'));
+            if(visible('analytics-student'))initializeStudentProfile(null,changed('analytics-student'));
+            if(visible('analytics-class'))initializeClassComparison(changed('analytics-class'));
+            if(visible('intervention'))initializeInterventionModule(changed('intervention'));
 
-            if (isPbdVisible) {
+            if(visible('pbd')&&!changed('pbd')){
                 // Keep the new matrix scope aligned with the global filter.
                 const globalYear = document.getElementById('filter-tahun').value;
                 const globalClass = document.getElementById('filter-kelas').value;
@@ -11009,18 +11019,17 @@
                 }
                 populatePbdMatrixClassOptions(globalClass !== 'ALL' ? globalClass : document.getElementById('pbd-class').value);
                 renderPbdModule();
-            }
+            }else if(visible('pbd'))initializePbdModule(true);
             refreshVisibleUpgradeView();
         }, 250);
     }
 
-    function onTahunChange() {
+    function onTahunChange(event=null) {
         const tahun = document.getElementById('filter-tahun').value;
         const kelasSelect = document.getElementById('filter-kelas');
         const previous = kelasSelect.value;
         const academicYear = document.getElementById('filter-academic-year').value;
 
-        ensureMattaryClassCatalog(isAdminSession?.()===true);
         let classes = canonicalActiveClasses(academicYear);
         if (currentUserRole === 'GURU_SEJARAH') classes = classes.filter(c => c.teacherId === currentUserId);
         if (tahun !== 'ALL') classes = classes.filter(c => String(c.year) === tahun);
@@ -11031,11 +11040,12 @@
         if (classes.some(c => c.id === previous)) kelasSelect.value = previous;
         else kelasSelect.value = 'ALL';
 
-        updateAssessmentDropdown();
-        onFilterChange();
+        updateAssessmentDropdown(null,false);
+        onFilterChange(event);
     }
 
     function resetFilters() {
+        const dashboardExam=document.getElementById('dashboard-assessment-type');if(dashboardExam)dashboardExam.value='ALL';
         document.getElementById('filter-academic-year').value = getActiveAcademicYear();
         document.getElementById('filter-tahun').value = 'ALL';
         document.getElementById('filter-kelas').value = 'ALL';
