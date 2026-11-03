@@ -330,8 +330,8 @@
     if(kind==='item')return {school,date,title:'Analisis Item & JSI Sejarah',scope:[`Sesi ${snapshot.scope.academicYear}`,`Tahun ${snapshot.scope.year}`,snapshot.scope.exam,snapshot.scope.className,snapshot.draft?'DRAF — belum disimpan':'Rekod tersimpan'].join(' · '),note:snapshot.source};
     if(kind==='dashboard')return {
       school,date,title:'Dashboard Prestasi Panitia Sejarah',
-      scope:[selected('filter-academic-year'),selected('filter-tahun'),selected('filter-kelas'),$('filter-assessment')?.value?selected('filter-assessment'):'Rekod markah dalam skop semasa'].filter(Boolean).join(' · '),
-      note:'Skop mengikut penapis Dashboard. Ringkasan GPMP menggunakan skopnya yang dipaparkan pada slaid GPMP.'
+      scope:[selected('filter-academic-year'),selected('filter-tahun'),selected('filter-kelas'),selected('dashboard-assessment-type')||'Pentaksiran terkini'].filter(Boolean).join(' · '),
+      note:[text('dashboard-filter-basis'),'Ringkasan GPMP menggunakan skopnya yang dipaparkan pada slaid GPMP.'].filter(Boolean).join(' · ')
     };
     if(kind==='marks')return {
       school,date,title:'Analisis Markah Ujian Sejarah',
