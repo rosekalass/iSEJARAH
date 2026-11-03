@@ -52,9 +52,19 @@
             if(!busyEditing()){
                 phase10ScheduleUiRefresh();
                 const view=[...document.querySelectorAll('[id^="view-"]')].find(visible)?.id.slice(5);
-                if(view==='analytics-student')initializeStudentProfile();
-                if(view==='analytics-class')initializeClassComparison();
-                if(view==='intervention')initializeInterventionModule();
+                // Refresh the scope visible now, after the request has completed.
+                // Initializers adopt global filters and can undo a local choice
+                // made while this request was in flight.
+                if(view==='analytics-student'){
+                    populateStudentProfileClasses();
+                    populateStudentProfileStudents();
+                    renderStudentProfile();
+                }
+                if(view==='analytics-class')renderClassComparison();
+                if(view==='intervention'){
+                    populateInterventionClassFilter(true);
+                    renderInterventionModule();
+                }
                 // Generated reports stay unchanged until the user generates them again.
             }
             stamp();return true;
